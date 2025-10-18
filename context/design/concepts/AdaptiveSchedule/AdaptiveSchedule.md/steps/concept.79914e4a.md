@@ -1,3 +1,9 @@
+---
+timestamp: 'Sat Oct 18 2025 18:36:34 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251018_183634.cb18801d.md]]'
+content_id: 79914e4afdd9b1aef82e8c248e2f663e3b963aea0705860f70c5bd45645578c7
+---
+
 # concept: AdaptiveSchedule
 
 ```

@@ -1,6 +1,5 @@
 # concept: RoutineLog
 
-
 ```
 concept RoutineLog [User]
 

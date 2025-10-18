@@ -1,3 +1,9 @@
+---
+timestamp: 'Sat Oct 18 2025 18:19:36 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251018_181936.9e03e696.md]]'
+content_id: c104b2ae6482dbaf9a78e45220e6e9dcb96963cfe0d01964216fbaf82d546446
+---
+
 # concept: AdaptiveSchedule
 
 ```
@@ -65,9 +71,9 @@ actions
 			if b doesn't exist, create it with owner, start, and end (same logic as addTimeBlock);
 			add taskId to this adaptive block's taskIdSet;
 	
-	async requestAdaptiveScheduleAI (owner: User, contexted_prompt: String): (adaptiveBlockTable: set of AdaptiveBlocks, droppedTaskSet: set of droppedTasks)
+	async requestAdaptiveScheduleAI (owner: User, context: String, prompt: String): (adaptiveBlockTable: set of AdaptiveBlocks, droppedTaskSet: set of droppedTasks)
 		effect:
-			send the structured contexted_prompt to the llm;
+			send a structured prompt to the llm with the provided context;
 			llm returns a structured JSON response including:
 				- adaptiveBlocks (with start/end times and assigned task ids)
 				- droppedTasks (tasks removed due to insufficient time)
