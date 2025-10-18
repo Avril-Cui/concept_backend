@@ -52,13 +52,13 @@ export default class TaskCatalogConcept {
   }
 
   /**
-   * getUserTasks (owner: User): (taskTable: set of Tasks)
+   * _getUserTasks (owner: User): (taskTable: set of Tasks)
    *
    * **requires** exist at least one task with this owner
    *
    * **effect** returns ALL tasks under this owner
    */
-  async getUserTasks(
+  async _getUserTasks(
     { owner }: { owner: User },
   ): Promise<{ taskTable: TaskDocument[] } | { error: string }> {
     const userTasks = await this.tasks.find({ owner }).toArray();

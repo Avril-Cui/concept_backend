@@ -64,7 +64,7 @@ Deno.test("RoutineLog Concept Tests", async (t) => {
       );
       console.log(`Started session ID: ${session1._id}`);
 
-      const startedSessionCheck = await routineLog.getUserSessions({
+      const startedSessionCheck = await routineLog._getUserSessions({
         owner: userAlice,
       });
       const s1_after_start = (startedSessionCheck as { sessionTable: any[] })
@@ -94,17 +94,17 @@ Deno.test("RoutineLog Concept Tests", async (t) => {
       console.log(`Ended session ID: ${session1._id}`);
 
       // 4. Verify the session details after ending
-      const retrievedSessions = await routineLog.getUserSessions({
+      const retrievedSessions = await routineLog._getUserSessions({
         owner: userAlice,
       });
       assertInstanceOf(
         retrievedSessions,
         Object,
-        "getUserSessions should return an object",
+        "_getUserSessions should return an object",
       );
       assertExists(
         (retrievedSessions as { sessionTable: any[] }).sessionTable,
-        "getUserSessions should return sessionTable",
+        "_getUserSessions should return sessionTable",
       );
       const sessions =
         (retrievedSessions as { sessionTable: any[] }).sessionTable;
@@ -218,7 +218,7 @@ Deno.test("RoutineLog Concept Tests", async (t) => {
     console.log(`Interrupted session ID: ${session3._id}`);
 
     // Verify the session state after interruption
-    const retrievedSessions = await routineLog.getUserSessions({
+    const retrievedSessions = await routineLog._getUserSessions({
       owner: userAlice,
     });
     const interruptedSession = (retrievedSessions as { sessionTable: any[] })
@@ -320,7 +320,7 @@ Deno.test("RoutineLog Concept Tests", async (t) => {
       console.log(`Created session ID: ${session6._id} for Bob.`);
 
       // Retrieve sessions for Alice
-      const aliceSessionsResult = await routineLog.getUserSessions({
+      const aliceSessionsResult = await routineLog._getUserSessions({
         owner: userAlice,
       });
       assertExists(
@@ -342,7 +342,7 @@ Deno.test("RoutineLog Concept Tests", async (t) => {
       );
 
       // Retrieve sessions for Bob
-      const bobSessionsResult = await routineLog.getUserSessions({
+      const bobSessionsResult = await routineLog._getUserSessions({
         owner: userBob,
       });
       assertExists(

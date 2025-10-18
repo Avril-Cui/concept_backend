@@ -52,16 +52,16 @@ export default class RoutineLogConcept {
   }
 
   /**
-   * getUserSessions (owner: User): (sessionTable: set of Sessions)
+   * _getUserSessions (owner: User): (sessionTable: set of Sessions)
    *
    * **requires** exists at least one session with this owner
    *
    * **effects** return ALL sessions under this owner
    */
-  async getUserSessions(
+  async _getUserSessions(
     { owner }: { owner: User },
   ): Promise<{ sessionTable: Session[] } | { error: string }> {
-    console.log(`Action: getUserSessions for owner: ${owner}`);
+    console.log(`Query: _getUserSessions for owner: ${owner}`);
     const userSessions = await this.sessions.find({ owner }).toArray();
 
     // The 'requires' clause strictly implies an error if no sessions exist.

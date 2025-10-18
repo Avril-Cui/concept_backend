@@ -21,7 +21,8 @@ state
         an interruptReason String (optional)
     
 actions
-    getUserSessions (owner: User): (sessionTable: set of Sessions)
+    _getUserSessions (owner: User): (sessionTable: set of Sessions)
+	    // this is a query
         requires: exists at least one session with this owner
         effect: return ALL sessions under this owner
 

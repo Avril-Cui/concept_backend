@@ -1,3 +1,9 @@
+---
+timestamp: 'Sat Oct 18 2025 17:28:26 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251018_172826.aaf4c775.md]]'
+content_id: aaf4c775a4e95c4fe3386560e97f7bb68c7d12604a340763ef2688ba21160aed
+---
+
 # concept: ScheduleTime
 
 ```

@@ -58,10 +58,10 @@ Deno.test("TaskCatalog Concept Tests", async (t) => {
   };
 
   await t.step(
-    "Initial State: getUserTasks for a new user should return an error",
+    "Initial State: _getUserTasks for a new user should return an error",
     async () => {
-      console.log("\n--- Initial State Check: getUserTasks for a new user ---");
-      const result = await concept.getUserTasks({ owner: userCharlie });
+      console.log("\n--- Initial State Check: _getUserTasks for a new user ---");
+      const result = await concept._getUserTasks({ owner: userCharlie });
       assertEquals(
         "error" in result,
         true,
@@ -73,7 +73,7 @@ Deno.test("TaskCatalog Concept Tests", async (t) => {
         "Error message should indicate no tasks found",
       );
       console.log(
-        `  getUserTasks for ${userCharlie} returned: ${JSON.stringify(result)}`,
+        `  _getUserTasks for ${userCharlie} returned: ${JSON.stringify(result)}`,
       );
     },
   );
@@ -162,7 +162,7 @@ Deno.test("TaskCatalog Concept Tests", async (t) => {
 
       // 4. Get user tasks to confirm
       console.log(`4. Retrieving all tasks for ${principleUser}`);
-      const getUserTasksResult = await concept.getUserTasks({
+      const getUserTasksResult = await concept._getUserTasks({
         owner: principleUser,
       });
       assertNotEquals(
