@@ -1,5 +1,11 @@
+---
+timestamp: 'Sat Oct 18 2025 17:24:47 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251018_172447.d226b9a6.md]]'
+content_id: 11938572f61baa7b7df576ea384b6f3389a700c1f1fcced68852c0816b0adb5e
+---
 
 # concept: TaskCatalog
+
 ```
 concept: TaskCatalog [User]
 
@@ -90,4 +96,3 @@ actions
         effect:
             remove task $t$ from Tasks
 ```
-
