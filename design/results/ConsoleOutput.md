@@ -54,6 +54,7 @@ TaskCatalog Concept Tests ...
 ## Scenario 1: operational principle test
 The operational principle is:
   > Users can create tasks with the required attributes. Users can update the attributes associated with the tasks. Users can schedule each task at one or more time blocks. Users can delete the tasks they own;
+  
 This test case verifies the operational principle of the TaskCatalog concept by walking through a typical task lifecycle. It begins with creating a new task, confirming that all required attributes are initialized properly. The test then updates the task’s category, demonstrating that users can modify task attributes. Next, it assigns a time block to the task, validating scheduling functionality. The system retrieves all tasks for the user, confirming that the newly created and updated task appears correctly. Finally, the task is deleted, ensuring proper cleanup. Together, these steps reflect the expected user workflow: create, update, schedule, retrieve, and delete. This confirms that each action behaves consistently with the concept’s intended operation.
 
 Result: All steps passed. Test success.
@@ -180,6 +181,7 @@ Thus, all test cases passed successfully for TaskCatalog concept!
 ## Scenario 0: operational principle, user schedules tasks for the day
 The operational principle is:
   > Each user owns a set of time blocks reflecting chunks of time during the day. Users can allocate tasks to one or more time blocks. The time blocks reflect the user's intended schedule of the day.
+
 This test validates the operational principle of the ScheduleTime concept by simulating how a user structures their day into scheduled time blocks. The user, Alice, first creates two distinct time blocks, representing available periods in her day. She then assigns different tasks, buyGroceries and finishReport, to each of those time blocks, demonstrating how tasks can be allocated to specific segments of time. Finally, retrieving Alice’s schedule confirms that each time block correctly reflects its assigned task and belongs to the right user.
 
 ```
@@ -335,6 +337,7 @@ All 5 test cases for ScheduleTime are successfully passed!
 ## Scenario 0: operational principles
 Operational principles for RoutineLog:
 > principle: After a user starts and finishes a session, the system records its actual duration and possible reasons of interruption.
+
 This test validates the operational principle of the RoutineLog concept by simulating how a user records an actual work session from start to finish. The user, Alice, first creates a new session linked to a planned task, confirming that the session is initialized with proper default states—inactive, not paused, and without start or end times. She then starts the session, which records the current timestamp and updates the session to active, showing that real-time activity is being tracked. Afterward, she ends the session, and the system correctly captures the end timestamp and marks the session as inactive. Finally, retrieving Alice’s session confirms that both start and end times are recorded, reflecting the true duration of her activity. Overall, this test demonstrates the principle that RoutineLog captures actual user activity as timestamped sessions, ensuring that each session’s lifecycle—creation, start, and end—is accurately recorded for reflection against the user’s planned schedule.
 
 ```
