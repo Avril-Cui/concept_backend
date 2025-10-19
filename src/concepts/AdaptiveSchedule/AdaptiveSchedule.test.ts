@@ -175,7 +175,7 @@ function createAdaptiveSchedulePrompt(
   ${currentTimeSection}
 
   USER PREFERENCES:
-  ${preference.preferences.map((p) => `- p`).join("\n")}
+  ${preference.preferences.map((p) => `- ${p}`).join("\n")}
 
   TASKS TO SCHEDULE:
   ** CRITICAL: ALL tasks listed below MUST be scheduled. Each task represents work that still needs to be done. **
@@ -314,6 +314,7 @@ async function logCurrentDroppedTasks(
   );
   const result = await concept._getDroppedTask({ owner });
   if ("error" in result) {
+    // This log will now only appear for actual errors, not for "no tasks found"
     console.log(`    Error fetching dropped tasks: ${result.error}`);
   } else {
     if (result.droppedTaskSet.length === 0) {
@@ -343,209 +344,204 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
   const userA = "user:Alice" as ID;
   const userB = "user:Bob" as ID;
 
-  // Define some common test data
-  const now = new Date();
-  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  const dayAfterTomorrow = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+  // Define new fixed current time for the operational principle
+  const currentTestTime = new Date("2025-10-04T13:00:00Z"); // 1:00 PM UTC
+  const currentTimeISO = currentTestTime.toISOString();
 
-  const task1Id = "task:study" as ID;
-  const task2Id = "task:laundry" as ID;
-  const task3Id = "task:report" as ID;
-  const task4Id = "task:exercise" as ID;
+  // Tasks to schedule (reflecting remaining duration after actual routine)
+  const taskProjectProposalId = "task:projectProposal" as ID;
+  const taskReviewPRId = "task:reviewPR" as ID;
+  const taskGymId = "task:gym" as ID;
+  const taskDinnerId = "task:dinner" as ID;
+  const taskSpanishId = "task:spanish" as ID;
 
-  const sampleTask1: Task = {
+  const sampleTaskProjectProposal: Task = {
     owner: userA,
-    taskId: task1Id,
-    taskName: "Study for Exam",
-    category: "Education",
-    duration: 120,
+    taskId: taskProjectProposalId,
+    taskName: "Complete Project Proposal",
+    category: "Work",
+    duration: 90,
     priority: 1,
-    splittable: true,
+    splittable: true, // 120 total - 30 completed = 90 remaining
   };
-  const sampleTask2: Task = {
+  const sampleTaskReviewPR: Task = {
     owner: userA,
-    taskId: task2Id,
-    taskName: "Do Laundry",
-    category: "Household",
+    taskId: taskReviewPRId,
+    taskName: "Review Pull Requests",
+    category: "Work",
+    duration: 60,
+    priority: 2,
+    splittable: false,
+  };
+  const sampleTaskGym: Task = {
+    owner: userA,
+    taskId: taskGymId,
+    taskName: "Gym Workout",
+    category: "Health",
     duration: 60,
     priority: 3,
     splittable: false,
   };
-  const sampleTask3: Task = {
+  const sampleTaskDinner: Task = {
     owner: userA,
-    taskId: task3Id,
-    taskName: "Write Project Report",
-    category: "Work",
-    duration: 180,
-    priority: 2,
-    splittable: true,
-    deadline: dayAfterTomorrow,
-  };
-  const sampleTask4: Task = {
-    owner: userA,
-    taskId: task4Id,
-    taskName: "Morning Exercise",
-    category: "Health",
+    taskId: taskDinnerId,
+    taskName: "Prepare Dinner",
+    category: "Household",
     duration: 30,
-    priority: 4,
+    priority: 3,
     splittable: false,
   };
+  const sampleTaskSpanish: Task = {
+    owner: userA,
+    taskId: taskSpanishId,
+    taskName: "Study Spanish",
+    category: "Education",
+    duration: 30,
+    priority: 4,
+    splittable: true,
+  };
 
-  const sampleTasksList = [sampleTask1, sampleTask2, sampleTask3, sampleTask4];
-  const emptySchedule: Schedule = { timeBlocks: [] };
-  const emptyRoutine: Routine = { sessions: [] };
-  const samplePreference: Preference = {
-    preferences: [
-      "Prefer high-priority tasks in the morning.",
-      "Batch similar tasks together.",
+  const sampleTasksList = [
+    sampleTaskProjectProposal,
+    sampleTaskReviewPR,
+    sampleTaskGym,
+    sampleTaskDinner,
+    sampleTaskSpanish,
+  ];
+
+  // Planned Schedule (Original Plan)
+  const plannedScheduleBlock1: TimeBlock = {
+    timeBlockId: "planned-1" as ID,
+    owner: userA,
+    start: new Date("2025-10-04T09:00:00Z"),
+    end: new Date("2025-10-04T11:00:00Z"),
+    taskIdSet: [taskProjectProposalId],
+  };
+  const plannedScheduleBlock2: TimeBlock = {
+    timeBlockId: "planned-2" as ID,
+    owner: userA,
+    start: new Date("2025-10-04T14:00:00Z"),
+    end: new Date("2025-10-04T15:00:00Z"),
+    taskIdSet: [taskReviewPRId],
+  };
+  const plannedScheduleBlock3: TimeBlock = {
+    timeBlockId: "planned-3" as ID,
+    owner: userA,
+    start: new Date("2025-10-04T17:00:00Z"),
+    end: new Date("2025-10-04T18:00:00Z"),
+    taskIdSet: [taskGymId],
+  };
+  const plannedScheduleBlock4: TimeBlock = {
+    timeBlockId: "planned-4" as ID,
+    owner: userA,
+    start: new Date("2025-10-04T18:00:00Z"),
+    end: new Date("2025-10-04T18:30:00Z"),
+    taskIdSet: [taskDinnerId],
+  };
+  const plannedScheduleBlock5: TimeBlock = {
+    timeBlockId: "planned-5" as ID,
+    owner: userA,
+    start: new Date("2025-10-04T19:00:00Z"),
+    end: new Date("2025-10-04T19:30:00Z"),
+    taskIdSet: [taskSpanishId],
+  };
+  const plannedSchedule: Schedule = {
+    timeBlocks: [
+      plannedScheduleBlock1,
+      plannedScheduleBlock2,
+      plannedScheduleBlock3,
+      plannedScheduleBlock4,
+      plannedScheduleBlock5,
     ],
   };
 
+  // Actual Routine (What Actually Happened)
+  const actualRoutineSession1: Session = {
+    owner: userA,
+    sessionName: "Morning Meeting",
+    sessionId: freshID(),
+    isPaused: false,
+    isActive: false,
+    start: new Date("2025-10-04T09:00:00Z"),
+    end: new Date("2025-10-04T10:30:00Z"),
+    interruptReason: "Unexpected urgent meeting took longer than expected",
+  };
+  const actualRoutineSession2: Session = {
+    owner: userA,
+    sessionName: "Started Project Proposal",
+    sessionId: freshID(),
+    isPaused: true,
+    isActive: false, // Paused implies incomplete
+    start: new Date("2025-10-04T10:30:00Z"),
+    end: new Date("2025-10-04T11:00:00Z"),
+    linkedTaskId: taskProjectProposalId, // Partially completed
+    interruptReason:
+      "Had to stop due to lunch break, only completed 30 minutes",
+  };
+  const actualRoutine: Routine = {
+    sessions: [actualRoutineSession1, actualRoutineSession2],
+  };
+
+  const samplePreference: Preference = {
+    preferences: [
+      "Prefer high-priority tasks first.",
+      "Batch similar tasks.",
+      "No demanding work after 9 PM.",
+    ],
+  };
+
+  const emptySchedule: Schedule = { timeBlocks: [] };
+  const emptyRoutine: Routine = { sessions: [] };
+
   await t.step(
-    "Operational Principle: Adding, Assigning, AI Adaptation, Unassigning, Querying",
+    "Operational Principle: AI Adaptation, Unassigning, Querying",
     async () => {
       console.log("\n--- Operational Principle Test ---");
-
-      // 1. Add a time block
-      const start1 = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        9,
-        0,
-      ); // 9:00 AM
-      const end1 = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        10,
-        0,
-      ); // 10:00 AM
       console.log(
-        `  Action: addTimeBlock for user ${userA}, from ${start1.toISOString()} to ${end1.toISOString()}`,
-      );
-      const addBlockResult = await concept.addTimeBlock({
-        owner: userA,
-        start: start1,
-        end: end1,
-      });
-      if ("error" in addBlockResult) {
-        throw new Error(`addTimeBlock failed: ${addBlockResult.error}`);
-      }
-      const timeBlockId1 = addBlockResult.timeBlockId;
-      console.log(`  Output: timeBlockId = ${timeBlockId1}`);
-      await logCurrentAdaptiveSchedule(
-        concept,
-        userA,
-        "after adding first time block",
+        `  Test started at simulated current time: ${currentTimeISO}`,
       );
 
-      // 2. Assign a task to that block
-      console.log(
-        `  Action: assignAdaptiveSchedule for user ${userA}, task ${task1Id} to block with range (${start1.toISOString()}, ${end1.toISOString()})`,
-      );
-      const assignResult1 = await concept.assignAdaptiveSchedule({
-        owner: userA,
-        taskId: task1Id,
-        start: start1,
-        end: end1,
-      });
-      if ("error" in assignResult1) {
-        throw new Error(
-          `assignAdaptiveSchedule failed: ${assignResult1.error}`,
-        );
-      }
-      assertEquals(
-        assignResult1.timeBlockId,
-        timeBlockId1,
-        "Should assign to the existing block with ID 1",
-      );
-      console.log(`  Output: timeBlockId = ${assignResult1.timeBlockId}`);
-
-      // Verify state after assignment
-      const verifyBlock1 = await concept.adaptiveBlocks.findOne({
-        _id: timeBlockId1,
-      });
-      assertEquals(
-        verifyBlock1?.taskIdSet,
-        [task1Id],
-        "Task should be in the block's taskIdSet",
-      );
-      await logCurrentAdaptiveSchedule(
-        concept,
-        userA,
-        "after assigning first task",
-      );
-
-      // 3. Simulate LLM request to adapt the schedule
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-      const currentTimeISO = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        currentHour,
-        currentMinute,
-      ).toISOString();
-
-      const llmProposedBlockStart = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        currentHour + 1,
-        0,
-      ); // Start 1 hour from now
-      const llmProposedBlockEnd = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        currentHour + 2,
-        0,
-      ); // End 2 hours from now
-      const llmDroppedTaskReason =
-        "Insufficient time due to unexpected meeting.";
-
-      // Configure mock LLM response
+      // LLM should generate adaptive schedule based on the new mock data
       mockGeminiLLM.mockResponse = JSON.stringify({
         analysis:
-          "Adjusted schedule based on overrunning meeting and prioritizing study.",
+          "Schedule adjusted due to unexpected morning meeting and interrupted project proposal. High priority tasks (Project Proposal, Review PRs) are rescheduled first. Gym, Dinner, and Spanish Study are placed in the evening to accommodate. No tasks were dropped.",
         adaptiveBlocks: [
           {
-            start: llmProposedBlockStart.toISOString(),
-            end: llmProposedBlockEnd.toISOString(),
-            taskIds: [task3Id], // Assign report task
+            start: new Date("2025-10-04T13:00:00Z").toISOString(), // 1:00 PM UTC
+            end: new Date("2025-10-04T14:30:00Z").toISOString(), // 2:30 PM UTC (90 min for project proposal)
+            taskIds: [taskProjectProposalId],
           },
           {
-            // Example of concurrent passive task (laundry)
-            start: llmProposedBlockStart.toISOString(), // Overlapping start
-            end: new Date(llmProposedBlockStart.getTime() + 60 * 60 * 1000)
-              .toISOString(), // 1 hour duration
-            taskIds: [task2Id], // Assign laundry task
+            start: new Date("2025-10-04T14:30:00Z").toISOString(), // 2:30 PM UTC
+            end: new Date("2025-10-04T15:30:00Z").toISOString(), // 3:30 PM UTC (60 min for review PRs)
+            taskIds: [taskReviewPRId],
+          },
+          {
+            start: new Date("2025-10-04T17:00:00Z").toISOString(), // 5:00 PM UTC
+            end: new Date("2025-10-04T18:00:00Z").toISOString(), // 6:00 PM UTC (60 min for gym)
+            taskIds: [taskGymId],
+          },
+          {
+            start: new Date("2025-10-04T18:00:00Z").toISOString(), // 6:00 PM UTC
+            end: new Date("2025-10-04T18:30:00Z").toISOString(), // 6:30 PM UTC (30 min for dinner)
+            taskIds: [taskDinnerId],
+          },
+          {
+            start: new Date("2025-10-04T18:30:00Z").toISOString(), // 6:30 PM UTC
+            end: new Date("2025-10-04T19:00:00Z").toISOString(), // 7:00 PM UTC (30 min for spanish)
+            taskIds: [taskSpanishId],
           },
         ],
-        droppedTasks: [{ taskId: task4Id, reason: llmDroppedTaskReason }], // Drop exercise task
+        droppedTasks: [],
       });
-
-      // Need to convert the database AdaptiveBlock objects to AdaptiveBlockForPrompt for the prompt function
-      const existingBlocksFromDb = await concept.adaptiveBlocks.find({
-        owner: userA,
-      }).toArray();
-      const existingBlocksForPrompt: AdaptiveBlockForPrompt[] =
-        existingBlocksFromDb.map((block) => ({
-          _id: block._id,
-          owner: block.owner,
-          start: block.start,
-          end: block.end,
-          taskIdSet: block.taskIdSet,
-        }));
 
       const contextedPrompt = createAdaptiveSchedulePrompt(
         userA,
         sampleTasksList,
-        emptySchedule,
-        emptyRoutine,
+        plannedSchedule,
+        actualRoutine,
         samplePreference,
-        existingBlocksForPrompt, // Use the converted existing blocks
+        [], // No existing adaptive blocks *before* the LLM runs in this scenario
         currentTimeISO,
       );
 
@@ -563,82 +559,86 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
         `  Output: Adaptive Blocks: ${aiResult.adaptiveBlockTable.length} entries, Dropped Tasks: ${aiResult.droppedTaskSet.length} entries`,
       );
 
-      // Verify that task3Id and task2Id are now assigned in new blocks
-      const blockWithTask3 = aiResult.adaptiveBlockTable.find((b) =>
-        b.taskIdSet.includes(task3Id)
-      );
-      assert(
-        blockWithTask3,
-        `Task ${task3Id} should be assigned after AI request`,
+      // Verify LLM's new schedule
+      assertEquals(
+        aiResult.adaptiveBlockTable.length,
+        5,
+        "Total number of adaptive blocks after AI should be 5.",
       );
       assertEquals(
-        blockWithTask3.start.toISOString(),
-        llmProposedBlockStart.toISOString(),
-        "LLM proposed block for Task3 start time mismatch",
-      );
-      assertEquals(
-        blockWithTask3.end.toISOString(),
-        llmProposedBlockEnd.toISOString(),
-        "LLM proposed block for Task3 end time mismatch",
+        aiResult.droppedTaskSet.length,
+        0,
+        "No tasks should be dropped.",
       );
 
-      const blockWithTask2 = aiResult.adaptiveBlockTable.find((b) =>
-        b.taskIdSet.includes(task2Id)
+      // Check for specific tasks
+      assert(
+        aiResult.adaptiveBlockTable.some((b) =>
+          b.taskIdSet.includes(taskProjectProposalId)
+        ),
+        `Task ${taskProjectProposalId} should be rescheduled.`,
       );
       assert(
-        blockWithTask2,
-        `Task ${task2Id} (laundry) should be assigned after AI request`,
+        aiResult.adaptiveBlockTable.some((b) =>
+          b.taskIdSet.includes(taskReviewPRId)
+        ),
+        `Task ${taskReviewPRId} should be rescheduled.`,
       );
-      // Note: The LLM could create a new block for laundry, or assign it to an existing overlapping block.
-      // For this test, we expect a new overlapping block, checking its start time.
-      assertEquals(
-        blockWithTask2.start.toISOString(),
-        llmProposedBlockStart.toISOString(),
-        "LLM proposed block for Task2 start time mismatch (for concurrency)",
+      assert(
+        aiResult.adaptiveBlockTable.some((b) =>
+          b.taskIdSet.includes(taskGymId)
+        ),
+        `Task ${taskGymId} should be rescheduled.`,
+      );
+      assert(
+        aiResult.adaptiveBlockTable.some((b) =>
+          b.taskIdSet.includes(taskDinnerId)
+        ),
+        `Task ${taskDinnerId} should be rescheduled.`,
+      );
+      assert(
+        aiResult.adaptiveBlockTable.some((b) =>
+          b.taskIdSet.includes(taskSpanishId)
+        ),
+        `Task ${taskSpanishId} should be rescheduled.`,
       );
 
-      // Verify dropped task
-      const droppedTask4 = aiResult.droppedTaskSet.find((t) =>
-        t.taskId === task4Id
-      );
-      assert(droppedTask4, `Task ${task4Id} should be in dropped tasks`);
-      assertEquals(
-        droppedTask4.reason,
-        llmDroppedTaskReason,
-        "Dropped task reason mismatch",
-      );
       await logCurrentAdaptiveSchedule(concept, userA, "after AI adaptation");
       await logCurrentDroppedTasks(concept, userA, "after AI adaptation");
 
-      // 4. Unassign a task
+      // 3. Unassign a task (e.g., user decides to do Gym later manually)
       console.log(
-        `  Action: unassignBlock for user ${userA}, task ${task1Id} from block ${timeBlockId1}`,
+        `  Action: unassignBlock for user ${userA}, task ${taskGymId} from its block`,
       );
-      const unassignResult = await concept.unassignBlock({
+      const gymBlock = aiResult.adaptiveBlockTable.find((b) =>
+        b.taskIdSet.includes(taskGymId)
+      );
+      assert(gymBlock, "Gym block must exist to unassign.");
+      const unassignGymResult = await concept.unassignBlock({
         owner: userA,
-        taskId: task1Id,
-        timeBlockId: timeBlockId1,
+        taskId: taskGymId,
+        timeBlockId: gymBlock._id,
       });
-      if ("error" in unassignResult) {
-        throw new Error(`unassignBlock failed: ${unassignResult.error}`);
+      if ("error" in unassignGymResult) {
+        throw new Error(`unassignBlock failed: ${unassignGymResult.error}`);
       }
       console.log(`  Output: {} (success)`);
 
       // Verify state after unassignment
-      const verifyBlockAfterUnassign = await concept.adaptiveBlocks.findOne({
-        _id: timeBlockId1,
+      const verifyGymRemoved = await concept.adaptiveBlocks.findOne({
+        _id: gymBlock._id,
       });
       assert(
-        !verifyBlockAfterUnassign?.taskIdSet.includes(task1Id),
-        "Task1 should be removed from the block",
+        !verifyGymRemoved?.taskIdSet.includes(taskGymId),
+        "Task (gym) should be removed from its block",
       );
       await logCurrentAdaptiveSchedule(
         concept,
         userA,
-        "after unassigning task",
+        "after unassigning gym task",
       );
 
-      // 5. Query for adaptive blocks
+      // 4. Query for adaptive blocks (should reflect current state)
       console.log(`  Action: _getAdaptiveSchedule for user ${userA}`);
       const getScheduleResult = await concept._getAdaptiveSchedule({
         owner: userA,
@@ -648,46 +648,49 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
           `_getAdaptiveSchedule failed: ${getScheduleResult.error}`,
         );
       }
-      assert(
-        getScheduleResult.adaptiveBlockTable.length > 0,
-        "Should return at least one adaptive block",
+      // Expect 5 blocks, because the empty block for gym is not deleted
+      assertEquals(
+        getScheduleResult.adaptiveBlockTable.length,
+        5,
+        "Should return 5 adaptive blocks (including one empty) after unassigning gym.",
       );
       console.log(
         `  Output: Found ${getScheduleResult.adaptiveBlockTable.length} adaptive blocks.`,
       );
-      // Note: The concept's _getAdaptiveSchedule returns all for the owner as implemented,
-      // as no "end of day" parameter was passed. This validates the basic retrieval.
 
-      // 6. Query for dropped tasks
+      // 5. Query for dropped tasks (should still be empty, no error expected)
       console.log(`  Action: _getDroppedTask for user ${userA}`);
       const getDroppedResult = await concept._getDroppedTask({ owner: userA });
       if ("error" in getDroppedResult) {
-        throw new Error(`_getDroppedTask failed: ${getDroppedResult.error}`);
+        throw new Error(
+          `_getDroppedTask failed unexpectedly: ${getDroppedResult.error}`,
+        );
       }
       assertEquals(
         getDroppedResult.droppedTaskSet.length,
-        1,
-        "Should return one dropped task",
+        0,
+        "Should still have 0 dropped tasks.",
       );
       console.log(
         `  Output: Found ${getDroppedResult.droppedTaskSet.length} dropped tasks.`,
       );
 
       console.log("\n\n--- Operational Principle Test Summary ---");
+      console.log(`Summary based on current time: ${currentTimeISO}`);
 
       // 1. All Tasks
-      console.log("\nAll Tasks:");
+      console.log("\nAll Tasks (considered for scheduling):");
       console.log(tasksToString(sampleTasksList));
 
       // 2. Original Planned Schedule
-      console.log("\nOriginal Planned Schedule (as provided to LLM, if any):");
-      console.log(scheduleToString(emptySchedule)); // This will likely be "No planned schedule"
+      console.log("\nOriginal Planned Schedule:");
+      console.log(scheduleToString(plannedSchedule));
 
-      // 3. Actual Routine (as provided to LLM, if any)
-      console.log("\nActual Routine (as provided to LLM, if any):");
-      console.log(routineToString(emptyRoutine)); // This will likely be "No actual routine"
+      // 3. Actual Routine
+      console.log("\nActual Routine:");
+      console.log(routineToString(actualRoutine));
 
-      // 4. Newest Adaptive Schedule
+      // 4. Final Adaptive Schedule
       console.log("\nFinal Adaptive Schedule:");
       const finalAdaptiveScheduleResult = await concept._getAdaptiveSchedule({
         owner: userA,
@@ -733,16 +736,16 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
         "\n--- Interesting Scenario 1: Duplicate Time Block & Task Assignment ---",
       );
       const start = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
+        new Date().getFullYear(),
+        new Date().getMonth(),
+        new Date().getDate(),
         11,
         0,
       ); // 11:00 AM
       const end = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
+        new Date().getFullYear(),
+        new Date().getMonth(),
+        new Date().getDate(),
         12,
         0,
       ); // 12:00 PM
@@ -756,7 +759,7 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
         start,
         end,
       });
-      if ("error" in addBlockResult) { // This check is correct, but the assert after needs to be careful
+      if ("error" in addBlockResult) {
         throw new Error(
           `addTimeBlock failed unexpectedly on first call: ${addBlockResult.error}`,
         );
@@ -898,13 +901,14 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     console.log("\n--- Interesting Scenario 2: Invalid Inputs ---");
     const testUser = "user:InvalidUser" as ID;
     const testTaskId = "task:InvalidTask" as ID;
+    const nowLocal = new Date(); // Use a local 'now' for this scenario
 
     // Invalid start/end times for addTimeBlock
     console.log("  Action: addTimeBlock with start >= end");
     const invalidTimeBlockResult1 = await concept.addTimeBlock({
       owner: testUser,
-      start: now,
-      end: now,
+      start: nowLocal,
+      end: nowLocal,
     });
     assert(
       "error" in invalidTimeBlockResult1,
@@ -921,7 +925,7 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     const invalidDateResult1 = await concept.addTimeBlock({
       owner: testUser,
       start: new Date("invalid"),
-      end: now,
+      end: nowLocal,
     });
     assert(
       "error" in invalidDateResult1,
@@ -933,7 +937,7 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     console.log("  Action: addTimeBlock with invalid Date objects (end)");
     const invalidDateResult2 = await concept.addTimeBlock({
       owner: testUser,
-      start: now,
+      start: nowLocal,
       end: new Date("invalid"),
     });
     assert(
@@ -948,8 +952,8 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     const invalidAssignResult1 = await concept.assignAdaptiveSchedule({
       owner: testUser,
       taskId: testTaskId,
-      start: now,
-      end: now,
+      start: nowLocal,
+      end: nowLocal,
     });
     assert(
       "error" in invalidAssignResult1,
@@ -984,9 +988,9 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     // Unassign non-existent task from an existing block
     const addBlockForTestResult = await concept.addTimeBlock({
       owner: testUser,
-      start: new Date(now.getTime() + 1000),
-      end: new Date(tomorrow.getTime() + 1000),
-    });
+      start: new Date(nowLocal.getTime() + 1000),
+      end: new Date(nowLocal.getTime() + 3600 * 1000),
+    }); // Block for 1 hour later
     if ("error" in addBlockForTestResult) {
       throw new Error(
         `Failed to create block for testing unassignNonExistentTaskResult: ${addBlockForTestResult.error}`,
@@ -1011,7 +1015,7 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
       `Task ${testTaskId} not found in block ${existingBlockId}.`,
     );
 
-    // Query for schedule/dropped tasks for user with no data
+    // Query for schedule/dropped tasks for user with no data (expect empty arrays, not errors)
     const emptyUser = freshID();
     console.log(
       `  Action: _getAdaptiveSchedule for user ${emptyUser} with no data`,
@@ -1019,28 +1023,38 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     const emptyScheduleResult = await concept._getAdaptiveSchedule({
       owner: emptyUser,
     });
-    assert(
-      "error" in emptyScheduleResult,
-      "Should error when querying schedule for user with no data",
+    // No error expected for simply having no blocks
+    if ("error" in emptyScheduleResult) {
+      throw new Error(
+        `_getAdaptiveSchedule failed unexpectedly for empty user: ${emptyScheduleResult.error}`,
+      );
+    }
+    assertEquals(
+      emptyScheduleResult.adaptiveBlockTable.length,
+      0,
+      "Should return an empty array for user with no adaptive blocks.",
     );
-    console.log(`  Output: ${JSON.stringify(emptyScheduleResult)}`);
-    assert(
-      emptyScheduleResult.error.includes("No adaptive blocks found"),
-      "Error message should indicate no blocks found.",
+    console.log(
+      `  Output: Found ${emptyScheduleResult.adaptiveBlockTable.length} adaptive blocks.`,
     );
 
     console.log(`  Action: _getDroppedTask for user ${emptyUser} with no data`);
     const emptyDroppedResult = await concept._getDroppedTask({
       owner: emptyUser,
     });
-    assert(
-      "error" in emptyDroppedResult,
-      "Should error when querying dropped tasks for user with no data",
+    // No error expected for simply having no dropped tasks
+    if ("error" in emptyDroppedResult) {
+      throw new Error(
+        `_getDroppedTask failed unexpectedly for empty user: ${emptyDroppedResult.error}`,
+      );
+    }
+    assertEquals(
+      emptyDroppedResult.droppedTaskSet.length,
+      0,
+      "Should return an empty array for user with no dropped tasks.",
     );
-    console.log(`  Output: ${JSON.stringify(emptyDroppedResult)}`);
-    assert(
-      emptyDroppedResult.error.includes("No dropped tasks found"),
-      "Error message should indicate no dropped tasks found.",
+    console.log(
+      `  Output: Found ${emptyDroppedResult.droppedTaskSet.length} dropped tasks.`,
     );
   });
 
@@ -1051,42 +1065,42 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     const taskC2 = "task:plan" as ID;
     const taskC3 = "task:cleanup" as ID;
 
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
+    const currentHour = new Date().getHours();
+    const currentMinute = new Date().getMinutes();
     const currentTimeISO = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      new Date().getDate(),
       currentHour,
       currentMinute,
     ).toISOString();
 
     // LLM proposes new blocks and dropped tasks
     const llmBlockC1Start = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      new Date().getDate(),
       currentHour + 2,
       0,
     );
     const llmBlockC1End = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      new Date().getDate(),
       currentHour + 3,
       0,
     );
     const llmBlockC2Start = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      new Date().getDate(),
       currentHour + 3,
       0,
     );
     const llmBlockC2End = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      new Date().getDate(),
       currentHour + 4,
       0,
     );
@@ -1257,63 +1271,65 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     );
     console.log(`  Output: ${JSON.stringify(missingFieldResult2)}`);
 
-    // LLM returns JSON missing analysis (added validation for analysis in the concept)
+    // LLM returns JSON with empty 'analysis' string
     mockGeminiLLM.mockResponse = JSON.stringify({
+      analysis: "",
       adaptiveBlocks: [],
       droppedTasks: [],
     });
     console.log(
-      `  Action: requestAdaptiveScheduleAI for user ${userC} (missing 'analysis' string)`,
+      `  Action: requestAdaptiveScheduleAI for user ${userC} (empty 'analysis' string)`,
     );
-    const missingAnalysisResult = await concept.requestAdaptiveScheduleAI({
+    const emptyAnalysisResult = await concept.requestAdaptiveScheduleAI({
       owner: userC,
       contexted_prompt: "dummy prompt",
     });
     assert(
-      "error" in missingAnalysisResult,
-      "Should error for missing analysis field",
+      "error" in emptyAnalysisResult,
+      "Should error for empty analysis string",
     );
     assert(
-      missingAnalysisResult.error.includes(
-        "LLM response missing 'analysis' string.",
+      emptyAnalysisResult.error.includes(
+        "LLM response missing or empty 'analysis' string.",
       ),
-      "Error message should indicate missing 'analysis'",
+      "Error message should indicate missing or empty 'analysis' string.",
     );
-    console.log(`  Output: ${JSON.stringify(missingAnalysisResult)}`);
+    console.log(`  Output: ${JSON.stringify(emptyAnalysisResult)}`);
   });
 
   await t.step("Interesting Scenario 4: Multiple Users", async () => {
     console.log("\n--- Interesting Scenario 4: Multiple Users ---");
     const userD = "user:David" as ID;
     const userE = "user:Eve" as ID;
+    const nowLocal = new Date(); // Use a local 'now' for this scenario
 
     const startD = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+      nowLocal.getFullYear(),
+      nowLocal.getMonth(),
+      nowLocal.getDate(),
       13,
       0,
     );
     const endD = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+      nowLocal.getFullYear(),
+      nowLocal.getMonth(),
+      nowLocal.getDate(),
       14,
       0,
     );
     const taskD1 = "task:gym" as ID;
 
     const startE = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+      nowLocal.getFullYear(),
+      nowLocal.getMonth(),
+      nowLocal.getDate(),
       15,
       0,
     );
     const endE = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
+      nowLocal.getFullYear(),
+      nowLocal.getMonth(),
+      nowLocal.getDate(),
       16,
       0,
     );
@@ -1400,7 +1416,7 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     // Query user D's data
     console.log(`  Action: _getAdaptiveSchedule for user ${userD}`);
     const getDBlocks = await concept._getAdaptiveSchedule({ owner: userD });
-    if ("error" in getDBlocks) {
+    if ("error" in getDBlocks) { // Only catch actual errors
       throw new Error(
         `_getAdaptiveSchedule for userD failed: ${getDBlocks.error}`,
       );
@@ -1428,7 +1444,7 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     // Query user E's data
     console.log(`  Action: _getAdaptiveSchedule for user ${userE}`);
     const getEBlocks = await concept._getAdaptiveSchedule({ owner: userE });
-    if ("error" in getEBlocks) {
+    if ("error" in getEBlocks) { // Only catch actual errors
       throw new Error(
         `_getAdaptiveSchedule for userE failed: ${getEBlocks.error}`,
       );

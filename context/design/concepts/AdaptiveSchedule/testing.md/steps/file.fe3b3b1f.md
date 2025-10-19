@@ -1,7 +1,16 @@
+---
+timestamp: 'Sat Oct 18 2025 21:28:11 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251018_212811.6e656cad.md]]'
+content_id: fe3b3b1f320de8439573dae89607f379a88a77d29244d9fa221bc76a458fe3ae
+---
+
+# file: src/concepts/AdaptiveSchedule/AdaptiveSchedule.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
-import { Config as GeminiConfig, GeminiLLM } from "@utils/GeminiLLM.ts"; // Assuming GeminiLLM is in @utils
+import { GeminiLLM, Config as GeminiConfig } from "@utils/GeminiLLM.ts"; // Assuming GeminiLLM is in @utils
 
 // Declare collection prefix, use concept name
 const PREFIX = "AdaptiveSchedule" + ".";
@@ -23,7 +32,7 @@ interface AdaptiveBlock {
   _id: ID; // Maps to timeBlockId
   owner: User;
   start: Date; // TimeStamp maps to Date in TS
-  end: Date; // TimeStamp maps to Date in TS
+  end: Date;   // TimeStamp maps to Date in TS
   taskIdSet: ID[];
 }
 
@@ -49,7 +58,7 @@ interface LlmLikelyResponse {
   analysis: string; // Added as per prompt example structure
   adaptiveBlocks: Array<{
     start: string; // ISO string for Date
-    end: string; // ISO string for Date
+    end: string;   // ISO string for Date
     taskIds: ID[];
   }>;
   droppedTasks: Array<{
@@ -69,9 +78,7 @@ export default class AdaptiveScheduleConcept {
     this.llm = new GeminiLLM(llmConfig);
 
     // Ensure indexes for efficient lookup and uniqueness checks
-    this.adaptiveBlocks.createIndex({ owner: 1, start: 1, end: 1 }, {
-      unique: true,
-    });
+    this.adaptiveBlocks.createIndex({ owner: 1, start: 1, end: 1 }, { unique: true });
     this.droppedTasks.createIndex({ taskId: 1, owner: 1 }, { unique: true });
     this.adaptiveBlocks.createIndex({ owner: 1 });
   }
@@ -81,19 +88,14 @@ export default class AdaptiveScheduleConcept {
    *
    * **effect** return a set of all adaptive blocks under this owner with end before the end of the day (or an empty set if none exist)
    */
-  async _getAdaptiveSchedule(
-    { owner }: { owner: User },
-  ): Promise<{ adaptiveBlockTable: AdaptiveBlock[] } | { error: string }> {
+  async _getAdaptiveSchedule({ owner }: { owner: User }): Promise<{ adaptiveBlockTable: AdaptiveBlock[] } | { error: string }> {
     try {
       const blocks = await this.adaptiveBlocks.find({ owner }).toArray();
       // Changed to return an empty array if no blocks are found, instead of an error.
       return { adaptiveBlockTable: blocks };
-    } catch (error: unknown) { // Explicitly type error as unknown
-      const errorMessage = error instanceof Error
-        ? error.message
-        : String(error);
-      console.error(`Error in _getAdaptiveSchedule: ${errorMessage}`);
-      return { error: `Failed to retrieve adaptive schedule: ${errorMessage}` };
+    } catch (error) {
+      console.error(`Error in _getAdaptiveSchedule: ${error.message}`);
+      return { error: `Failed to retrieve adaptive schedule: ${error.message}` };
     }
   }
 
@@ -102,19 +104,14 @@ export default class AdaptiveScheduleConcept {
    *
    * **effect** returns all dropped tasks for the user (tasks that couldn't be scheduled due to insufficient time, or an empty set if none exist)
    */
-  async _getDroppedTask(
-    { owner }: { owner: User },
-  ): Promise<{ droppedTaskSet: DroppedTask[] } | { error: string }> {
+  async _getDroppedTask({ owner }: { owner: User }): Promise<{ droppedTaskSet: DroppedTask[] } | { error: string }> {
     try {
       const tasks = await this.droppedTasks.find({ owner }).toArray();
       // Changed to return an empty array if no tasks are found, instead of an error.
       return { droppedTaskSet: tasks };
-    } catch (error: unknown) { // Explicitly type error as unknown
-      const errorMessage = error instanceof Error
-        ? error.message
-        : String(error);
-      console.error(`Error in _getDroppedTask: ${errorMessage}`);
-      return { error: `Failed to retrieve dropped tasks: ${errorMessage}` };
+    } catch (error) {
+      console.error(`Error in _getDroppedTask: ${error.message}`);
+      return { error: `Failed to retrieve dropped tasks: ${error.message}` };
     }
   }
 
@@ -131,9 +128,7 @@ export default class AdaptiveScheduleConcept {
    *   assign $b$ an empty taskIdSet;
    *   return b.timeBlockId;
    */
-  async addTimeBlock(
-    { owner, start, end }: { owner: User; start: Date; end: Date },
-  ): Promise<{ timeBlockId: ID } | { error: string }> {
+  async addTimeBlock({ owner, start, end }: { owner: User; start: Date; end: Date }): Promise<{ timeBlockId: ID } | { error: string }> {
     if (!(start instanceof Date) || isNaN(start.getTime())) {
       return { error: "Invalid 'start' TimeStamp." };
     }
@@ -145,16 +140,9 @@ export default class AdaptiveScheduleConcept {
     }
 
     try {
-      const existingBlock = await this.adaptiveBlocks.findOne({
-        owner,
-        start,
-        end,
-      });
+      const existingBlock = await this.adaptiveBlocks.findOne({ owner, start, end });
       if (existingBlock) {
-        return {
-          error:
-            "An adaptive time block with this owner, start, and end already exists.",
-        };
+        return { error: "An adaptive time block with this owner, start, and end already exists." };
       }
 
       const newBlockId = freshID();
@@ -168,12 +156,9 @@ export default class AdaptiveScheduleConcept {
 
       await this.adaptiveBlocks.insertOne(newBlock);
       return { timeBlockId: newBlockId };
-    } catch (error: unknown) { // Explicitly type error as unknown
-      const errorMessage = error instanceof Error
-        ? error.message
-        : String(error);
-      console.error(`Error in addTimeBlock: ${errorMessage}`);
-      return { error: `Failed to add time block: ${errorMessage}` };
+    } catch (error) {
+      console.error(`Error in addTimeBlock: ${error.message}`);
+      return { error: `Failed to add time block: ${error.message}` };
     }
   }
 
@@ -188,14 +173,7 @@ export default class AdaptiveScheduleConcept {
    *   add taskId to this adaptive block's taskIdSet;
    *   return b.timeBlockId;
    */
-  async assignAdaptiveSchedule(
-    { owner, taskId, start, end }: {
-      owner: User;
-      taskId: ID;
-      start: Date;
-      end: Date;
-    },
-  ): Promise<{ timeBlockId: ID } | { error: string }> {
+  async assignAdaptiveSchedule({ owner, taskId, start, end }: { owner: User; taskId: ID; start: Date; end: Date }): Promise<{ timeBlockId: ID } | { error: string }> {
     if (!(start instanceof Date) || isNaN(start.getTime())) {
       return { error: "Invalid 'start' TimeStamp." };
     }
@@ -207,31 +185,23 @@ export default class AdaptiveScheduleConcept {
     }
 
     try {
-      const existingBlock = await this.adaptiveBlocks.findOne({
-        owner,
-        start,
-        end,
-      });
+      const existingBlock = await this.adaptiveBlocks.findOne({ owner, start, end });
 
       if (existingBlock) {
         if (existingBlock.taskIdSet.includes(taskId)) {
-          return {
-            error:
-              `Task ${taskId} is already assigned to the block with ID ${existingBlock._id}.`,
-          };
+          return { error: `Task ${taskId} is already assigned to the block with ID ${existingBlock._id}.` };
         }
 
         const updateResult = await this.adaptiveBlocks.updateOne(
           { _id: existingBlock._id },
-          { $addToSet: { taskIdSet: taskId } },
+          { $addToSet: { taskIdSet: taskId } }
         );
 
-        if (
-          updateResult.modifiedCount === 0 && updateResult.matchedCount === 0
-        ) {
+        if (updateResult.modifiedCount === 0 && updateResult.matchedCount === 0) {
           return { error: "Failed to update existing block with task." };
         }
         return { timeBlockId: existingBlock._id };
+
       } else {
         const newBlockId = freshID();
         const newBlock: AdaptiveBlock = {
@@ -245,12 +215,9 @@ export default class AdaptiveScheduleConcept {
         await this.adaptiveBlocks.insertOne(newBlock);
         return { timeBlockId: newBlockId };
       }
-    } catch (error: unknown) { // Explicitly type error as unknown
-      const errorMessage = error instanceof Error
-        ? error.message
-        : String(error);
-      console.error(`Error in assignAdaptiveSchedule: ${errorMessage}`);
-      return { error: `Failed to assign adaptive schedule: ${errorMessage}` };
+    } catch (error) {
+      console.error(`Error in assignAdaptiveSchedule: ${error.message}`);
+      return { error: `Failed to assign adaptive schedule: ${error.message}` };
     }
   }
 
@@ -260,7 +227,6 @@ export default class AdaptiveScheduleConcept {
    * **effect**
    *   send the structured contexted_prompt to the llm;
    *   llm returns a structured JSON response including:
-   *     - analysis (string describing the LLM's analysis)
    *     - adaptiveBlocks (with start/end times and assigned task ids)
    *     - droppedTasks (tasks removed due to insufficient time)
    *       - each droppedTask has a task id and a reason for dropping
@@ -270,45 +236,28 @@ export default class AdaptiveScheduleConcept {
    */
   async requestAdaptiveScheduleAI(
     { owner, contexted_prompt }: { owner: User; contexted_prompt: string },
-  ): Promise<
-    { adaptiveBlockTable: AdaptiveBlock[]; droppedTaskSet: DroppedTask[] } | {
-      error: string;
-    }
-  > {
+  ): Promise<{ adaptiveBlockTable: AdaptiveBlock[]; droppedTaskSet: DroppedTask[] } | { error: string }> {
     try {
       const llmResponseText = await this.llm.executeLLM(contexted_prompt);
       let llmResponse: LlmLikelyResponse;
 
       try {
         llmResponse = JSON.parse(llmResponseText);
-      } catch (parseError: unknown) { // Explicitly type parseError as unknown
-        const parseErrorMessage = parseError instanceof Error
-          ? parseError.message
-          : String(parseError);
-        return {
-          error:
-            `LLM response was not valid JSON: ${parseErrorMessage}. Response: ${llmResponseText}`,
-        };
+      } catch (parseError) {
+        return { error: `LLM response was not valid JSON: ${parseError.message}. Response: ${llmResponseText}` };
       }
 
       // Validate required fields in LLM response
-      if (
-        typeof llmResponse.analysis !== "string" ||
-        llmResponse.analysis.trim() === ""
-      ) { // Added validation for analysis, checking for empty string too
-        return { error: "LLM response missing or empty 'analysis' string." };
+      if (typeof llmResponse.analysis !== 'string') { // Added validation for analysis
+          return { error: "LLM response missing 'analysis' string." };
       }
-      if (
-        !llmResponse.adaptiveBlocks ||
-        !Array.isArray(llmResponse.adaptiveBlocks)
-      ) {
+      if (!llmResponse.adaptiveBlocks || !Array.isArray(llmResponse.adaptiveBlocks)) {
         return { error: "LLM response missing 'adaptiveBlocks' array." };
       }
-      if (
-        !llmResponse.droppedTasks || !Array.isArray(llmResponse.droppedTasks)
-      ) {
+      if (!llmResponse.droppedTasks || !Array.isArray(llmResponse.droppedTasks)) {
         return { error: "LLM response missing 'droppedTasks' array." };
       }
+
 
       const assignedBlockIds: ID[] = [];
       for (const block of llmResponse.adaptiveBlocks) {
@@ -316,16 +265,9 @@ export default class AdaptiveScheduleConcept {
         const end = new Date(block.end);
 
         for (const taskId of block.taskIds) {
-          const assignResult = await this.assignAdaptiveSchedule({
-            owner,
-            taskId,
-            start,
-            end,
-          });
+          const assignResult = await this.assignAdaptiveSchedule({ owner, taskId, start, end });
           if ("error" in assignResult) {
-            console.warn(
-              `Warning: Could not assign task ${taskId} from LLM proposal: ${assignResult.error}`,
-            );
+            console.warn(`Warning: Could not assign task ${taskId} from LLM proposal: ${assignResult.error}`);
             // Depending on policy, might choose to stop or continue. For now, continue and log.
           } else {
             assignedBlockIds.push(assignResult.timeBlockId);
@@ -347,16 +289,11 @@ export default class AdaptiveScheduleConcept {
           await this.droppedTasks.updateOne(
             { taskId: newDroppedTask.taskId, owner: newDroppedTask.owner },
             { $set: newDroppedTask },
-            { upsert: true },
+            { upsert: true }
           );
           newDroppedTasks.push(newDroppedTask);
-        } catch (insertError: unknown) { // Explicitly type insertError as unknown
-          const insertErrorMessage = insertError instanceof Error
-            ? insertError.message
-            : String(insertError);
-          console.warn(
-            `Warning: Could not add dropped task ${dropped.taskId}: ${insertErrorMessage}`,
-          );
+        } catch (insertError) {
+          console.warn(`Warning: Could not add dropped task ${dropped.taskId}: ${insertError.message}`);
         }
       }
 
@@ -367,33 +304,20 @@ export default class AdaptiveScheduleConcept {
 
       // Handle potential errors from _getAdaptiveSchedule or _getDroppedTask
       if ("error" in getBlocksResult) {
-        return {
-          error:
-            `Failed to retrieve final adaptive schedule after AI processing: ${getBlocksResult.error}`,
-        };
+        return { error: `Failed to retrieve final adaptive schedule after AI processing: ${getBlocksResult.error}` };
       }
       if ("error" in getDroppedTasksResult) {
-        return {
-          error:
-            `Failed to retrieve final dropped tasks after AI processing: ${getDroppedTasksResult.error}`,
-        };
+        return { error: `Failed to retrieve final dropped tasks after AI processing: ${getDroppedTasksResult.error}` };
       }
 
       const finalAdaptiveBlocks = getBlocksResult.adaptiveBlockTable;
       const finalDroppedTasks = getDroppedTasksResult.droppedTaskSet;
 
-      return {
-        adaptiveBlockTable: finalAdaptiveBlocks,
-        droppedTaskSet: finalDroppedTasks,
-      };
-    } catch (error: unknown) { // Explicitly type error as unknown
-      const errorMessage = error instanceof Error
-        ? error.message
-        : String(error);
-      console.error(`Error in requestAdaptiveScheduleAI: ${errorMessage}`);
-      return {
-        error: `Failed to request adaptive schedule from AI: ${errorMessage}`,
-      };
+      return { adaptiveBlockTable: finalAdaptiveBlocks, droppedTaskSet: finalDroppedTasks };
+
+    } catch (error) {
+      console.error(`Error in requestAdaptiveScheduleAI: ${error.message}`);
+      return { error: `Failed to request adaptive schedule from AI: ${error.message}` };
     }
   }
 
@@ -407,23 +331,11 @@ export default class AdaptiveScheduleConcept {
    * **effect**
    *   remove taskId from that block's taskIdSet
    */
-  async unassignBlock(
-    { owner, taskId, timeBlockId }: {
-      owner: User;
-      taskId: ID;
-      timeBlockId: ID;
-    },
-  ): Promise<Empty | { error: string }> {
+  async unassignBlock({ owner, taskId, timeBlockId }: { owner: User; taskId: ID; timeBlockId: ID }): Promise<Empty | { error: string }> {
     try {
-      const block = await this.adaptiveBlocks.findOne({
-        _id: timeBlockId,
-        owner,
-      });
+      const block = await this.adaptiveBlocks.findOne({ _id: timeBlockId, owner });
       if (!block) {
-        return {
-          error:
-            `Adaptive block with ID ${timeBlockId} not found for owner ${owner}.`,
-        };
+        return { error: `Adaptive block with ID ${timeBlockId} not found for owner ${owner}.` };
       }
 
       if (!block.taskIdSet.includes(taskId)) {
@@ -432,22 +344,20 @@ export default class AdaptiveScheduleConcept {
 
       const updateResult = await this.adaptiveBlocks.updateOne(
         { _id: timeBlockId, owner },
-        { $pull: { taskIdSet: taskId } },
+        { $pull: { taskIdSet: taskId } }
       );
 
       if (updateResult.modifiedCount === 0) {
-        return {
-          error: `Failed to unassign task ${taskId} from block ${timeBlockId}.`,
-        };
+        return { error: `Failed to unassign task ${taskId} from block ${timeBlockId}.` };
       }
 
       return {};
-    } catch (error: unknown) { // Explicitly type error as unknown
-      const errorMessage = error instanceof Error
-        ? error.message
-        : String(error);
-      console.error(`Error in unassignBlock: ${errorMessage}`);
-      return { error: `Failed to unassign task: ${errorMessage}` };
+    } catch (error) {
+      console.error(`Error in unassignBlock: ${error.message}`);
+      return { error: `Failed to unassign task: ${error.message}` };
     }
   }
 }
+```
+
+***
