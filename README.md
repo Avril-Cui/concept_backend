@@ -39,7 +39,7 @@ Contains my finalized concept specifications and conversations with the Context 
 	- [RoutineLog testing](design/concepts/RoutineLog/testing.md)
 	- [AdaptiveSchedule testing](design/concepts/AdaptiveSchedule/testing.md)
 
-# Result write up: test results, concept updates, interesting moments
+# Result write up: test results, concepts and design updates, interesting moments
 ## `/design/results/ConsoleOutput.md`
 Contains a copy of the console output showing the execution of the test script for each concept (in markdown).
 [ConsoleOutput](design/results/ConsoleOutput.md)
