@@ -1,5 +1,4 @@
-# Key Directories
-
+# Source code for implementation and testing
 ## `/src/concepts/`
 Contains the implementation of four core concepts:
 - **TaskCatalog**: Manages tasks with dependencies, priorities, deadlines, and scheduling
@@ -9,13 +8,15 @@ Contains the implementation of four core concepts:
 
 Each concept includes:
 - Implementation file (`.ts`)
-- Comprehensive test suite (`.test.ts`)
+- Comprehensive test suite (`.test.ts`). A more designed explanation on these test cases can be found in `/design/results/ConsoleOutput.md`.
 
 ### `/src/utils/`
 Shared utilities:
 - **database.ts**: MongoDB connection management and test database utilities
 - **types.ts**: Common type definitions (ID, Empty, etc.)
 - **GeminiLLM.ts**: Integration with Google's Gemini AI for adaptive scheduling
+
+# Markdown design files for concept specifications
 
 ## `/design/`
 Complete design documentation including concept specifications, implementation notes, testing strategies, and design exploration materials. Interacts with the Context Tool.
@@ -38,6 +39,7 @@ Contains my finalized concept specifications and conversations with the Context 
 	- [RoutineLog testing](design/concepts/RoutineLog/testing.md)
 	- [AdaptiveSchedule testing](design/concepts/AdaptiveSchedule/testing.md)
 
+# Result write up: test results, concept updates, interesting moments
 ## `/design/results/ConsoleOutput.md`
 Contains a copy of the console output showing the execution of the test script for each concept (in markdown).
 [ConsoleOutput](design/results/ConsoleOutput.md)
@@ -45,7 +47,7 @@ Contains a copy of the console output showing the execution of the test script f
 ## `/design/results/design.md`
 A design file explaining changes I made to the concept as specified in Assignment 2 and any other issues that came up (in markdown). Also records interesting moments with explanation and links to relevant files.
 
-## `/context`
+# `/context`
 Snapshots that confirm that I worked in a reflective and incremental way.
 
 ## Running Tests

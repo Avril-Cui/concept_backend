@@ -1,11 +1,16 @@
 In this doc, we will go through the console logged info for the test scenarios of each concept, and provide some commentary description if needed.
+Reach about the finalized concept specifications here:
+[AdaptiveSchedule](../concepts/AdaptiveSchedule/AdaptiveSchedule.md)
+[RoutineLog](../concepts/RoutineLog/RoutineLog.md)
+[ScheduleTime](../concepts/ScheduleTime/ScheduleTime.md)
+[TaskCatalog](../concepts/TaskCatalog/TaskCatalog.md)
 
 ## Table of Contents
 
 - [TaskCatalog](#taskcatalog)
   - [Initial state check](#initial-state-check)
-  - [Scenario 1 — operational principle](#scenario-1--operational-principle)
-  - [Task dependency chain management](#task-dependency-chain-management)
+  - [Scenario 1 — operational principle](#scenario-1-operational-principle)
+  - [Task dependency chain management](#scenario-2-task-dependency-chain-management)
   - [Scenario 3: scheduling + attribute update](#scenario-3-scheduling--attribute-update)
   - [Scenario 4: user isolation and error handling](#scenario-4-user-isolation-and-error-handling)
   - [Scenario 5: repetition and invalid arguments](#scenario-5-repetition-and-invalid-arguments)
@@ -46,13 +51,11 @@ TaskCatalog Concept Tests ...
   Scenario 1: Operational Principle - Basic Task Lifecycle ...
 ------- post-test output -------
 ```
-## Scenario 1 — operational principle
-We run the following steps:
-1. `createTask`
-2. `updateTaskCategory`
-3. `assignSchedule`
-4.	`_getUserTasks` -> expects exactly 1 task, ID matches.
-5.	`deleteTask` -> verifies the task is removed from DB.
+## Scenario 1: operational principle test
+The operational principle is:
+  > Users can create tasks with the required attributes. Users can update the attributes associated with the tasks. Users can schedule each task at one or more time blocks. Users can delete the tasks they own;
+This test case verifies the operational principle of the TaskCatalog concept by walking through a typical task lifecycle. It begins with creating a new task, confirming that all required attributes are initialized properly. The test then updates the task’s category, demonstrating that users can modify task attributes. Next, it assigns a time block to the task, validating scheduling functionality. The system retrieves all tasks for the user, confirming that the newly created and updated task appears correctly. Finally, the task is deleted, ensuring proper cleanup. Together, these steps reflect the expected user workflow: create, update, schedule, retrieve, and delete. This confirms that each action behaves consistently with the concept’s intended operation.
+
 Result: All steps passed. Test success.
 ```
 --- Scenario 1: Operational Principle - Basic Task Lifecycle ---
@@ -71,7 +74,7 @@ Calling createTask with: {"owner":"user:PrincipleTester","taskName":"Operational
   Scenario 1: Operational Principle - Basic Task Lifecycle ... ok (370ms)
 ```
 
-## Task dependency chain management
+## Scenario 2: Task dependency chain management
 ```
 --- Scenario 2: Complex Dependency Chain Management ---
 Tests creating a chain of dependencies, attempting to delete a parent, then removing dependencies and deleting successfully.
@@ -175,6 +178,9 @@ Thus, all test cases passed successfully for TaskCatalog concept!
 
 # ScheduleTime
 ## Scenario 0: operational principle, user schedules tasks for the day
+The operational principle is:
+  > Each user owns a set of time blocks reflecting chunks of time during the day. Users can allocate tasks to one or more time blocks. The time blocks reflect the user's intended schedule of the day.
+This test validates the operational principle of the ScheduleTime concept by simulating how a user structures their day into scheduled time blocks. The user, Alice, first creates two distinct time blocks, representing available periods in her day. She then assigns different tasks, buyGroceries and finishReport, to each of those time blocks, demonstrating how tasks can be allocated to specific segments of time. Finally, retrieving Alice’s schedule confirms that each time block correctly reflects its assigned task and belongs to the right user.
 
 ```
 running 1 test from ./src/concepts/ScheduleTime/ScheduleTime.test.ts
@@ -327,6 +333,10 @@ All 5 test cases for ScheduleTime are successfully passed!
 
 # RoutineLog
 ## Scenario 0: operational principles
+Operational principles for RoutineLog:
+> principle: After a user starts and finishes a session, the system records its actual duration and possible reasons of interruption.
+This test validates the operational principle of the RoutineLog concept by simulating how a user records an actual work session from start to finish. The user, Alice, first creates a new session linked to a planned task, confirming that the session is initialized with proper default states—inactive, not paused, and without start or end times. She then starts the session, which records the current timestamp and updates the session to active, showing that real-time activity is being tracked. Afterward, she ends the session, and the system correctly captures the end timestamp and marks the session as inactive. Finally, retrieving Alice’s session confirms that both start and end times are recorded, reflecting the true duration of her activity. Overall, this test demonstrates the principle that RoutineLog captures actual user activity as timestamped sessions, ensuring that each session’s lifecycle—creation, start, and end—is accurately recorded for reflection against the user’s planned schedule.
+
 ```
 Operational Principle: Create, Start, and End a Session ...
 ------- post-test output -------
@@ -475,6 +485,11 @@ All 6 test cases for RoutineLog are successfully passed!
 The test script mocks the GeminiLLM to control its response for deterministic testing. We do this to generate test cases that can be replicated, since we only want to test the concept's behavior in this case, not how well the LLM works.
 
 ## Scenario 0: operational principle
+Operational principle for AdaptiveSchedule:
+> When actual sessions overrun or diverge from the plan, the adaptive scheduler adjusts subsequent planned tasks into adaptive time blocks. This process can operate in two modes: (1) Manual mode — user reviews deviations and adjusts future time blocks; (2) AI-augmented mode — provide necessary context to the LLM, then the LLM analyzes deviations, infers likely causes, and automatically proposes a revised schedule.
+
+This test validates the operational principle of AdaptiveSchedule by exercising the full AI-augmented adjustment loop plus manual editing and queries. First, requestAdaptiveScheduleAI is invoked with contextual inputs (planned schedule, actual sessions, task set, current time in the prompt, simulating how a sync will pass in these data). The mock LLM returns five adaptive blocks and zero dropped tasks, and the system materializes those blocks, each with unique IDs, owner, start/end, and assigned task IDs, demonstrating automatic rescheduling when reality diverges. Next, a manual override via unassignBlock removes task:gym from its 17:00–18:00 block, showing that users can adjust the AI’s proposal without recreating blocks. Finally, _getAdaptiveSchedule and _getDroppedTask confirm the post-edit state, proving that the scheduler both adapts (AI mode) and supports user control (manual mode).
+
 ```
 Operational Principle: AI Adaptation, Unassigning, Querying ...
 --- Operational Principle Test ---
