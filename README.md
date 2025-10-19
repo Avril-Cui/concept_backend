@@ -51,7 +51,7 @@ A design file explaining changes I made to the concept as specified in Assignmen
 Snapshots that confirm that I worked in a reflective and incremental way.
 
 ## Running Tests
-
+- Since one of my concepts is AI-augmented, some times that specific test case might fail. But you can run deno test again, and it's very likely all will pass.
 ```bash
 deno test -A
 ```
