@@ -45,7 +45,7 @@ Contains a copy of the console output showing the execution of the test script f
 [ConsoleOutput](design/results/ConsoleOutput.md)
 
 ## `/design/results/design.md`
-A design file explaining changes I made to the concept as specified in Assignment 2 and any other issues that came up (in markdown). Also records interesting moments with explanation and links to relevant files.
+A design file explaining changes I made to the concept and application designs as specified in Assignment 2 and any other issues that came up (in markdown). Also records interesting moments with explanation and links to relevant files.
 
 # `/context`
 Snapshots that confirm that I worked in a reflective and incremental way.
