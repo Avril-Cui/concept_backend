@@ -1,5 +1,36 @@
 In this doc, we will go through the console logged info for the test scenarios of each concept, and provide some commentary description if needed.
 
+## Table of Contents
+
+- [TaskCatalog](#taskcatalog)
+  - [Initial state check](#initial-state-check)
+  - [Scenario 1 — operational principle](#scenario-1--operational-principle)
+  - [Task dependency chain management](#task-dependency-chain-management)
+  - [Scenario 3: scheduling + attribute update](#scenario-3-scheduling--attribute-update)
+  - [Scenario 4: user isolation and error handling](#scenario-4-user-isolation-and-error-handling)
+  - [Scenario 5: repetition and invalid arguments](#scenario-5-repetition-and-invalid-arguments)
+- [ScheduleTime](#scheduletime)
+  - [Scenario 0: operational principle, user schedules tasks for the day](#scenario-0-operational-principle-user-schedules-tasks-for-the-day)
+  - [Scenario 1: assigning tasks](#scenario-1-assigning-tasks)
+  - [Scenario 2: removing tasks](#scenario-2-removing-tasks)
+  - [Scenario 3: addTimeBlock and duplication](#scenario-3-addtimeblock-and-duplication)
+  - [Scenario 4: Non-existing owner](#scenario-4-non-existing-owner)
+- [RoutineLog](#routinelog)
+  - [Scenario 0: operational principles](#scenario-0-operational-principles)
+  - [Scenario 1: start cases](#scenario-1-start-cases)
+  - [Scenario 2: interruption](#scenario-2-interruption)
+  - [Scenario 3: multiple sessions](#scenario-3-multiple-sessions)
+  - [Scenario 4: edge-cases for ending](#scenario-4-edge-cases-for-ending)
+  - [Scenario 5: edge-cases for interruption](#scenario-5-edge-cases-for-interruption)
+- [AdaptiveSchedule](#adaptiveschedule)
+  - [Scenario 0: operational principle](#scenario-0-operational-principle)
+  - [Scenario 1: duplicate time block and task assignment](#scenario-1-duplicate-time-block-and-task-assignment)
+  - [Scenario 2: invalid inputs](#scenario-2-invalid-inputs)
+  - [Scenario 3: handling bad LLM responses](#scenario-3-handling-bad-llm-responses)
+  - [Scenario 4: multiple users](#scenario-4-multiple-users)
+
+---
+
 # TaskCatalog
 ## Initial state check
 Initially, there is no task for a new user. We just the behavior by ensuring the query `_getUserTasks` returns an error.
