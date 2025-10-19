@@ -1,5 +1,5 @@
 # Concept Updates Summary
-Compared with how I defined my four concepts in [Assignment 2](https://github.com/Avril-Cui/61040-portfolio/blob/main/assignments/assignment2.md), I have made several changes. I will walk through the major updates in each concept.
+Compared with how I defined my four concepts in [Assignment 2](https://github.com/Avril-Cui/61040-portfolio/blob/main/assignments/assignment2.md), I have made several changes. I will walk through the major updates in each concept. In terms of changes of the application as a whole, I kept the same structure. There is still 4 concepts, and the operational principles remains unchanged (except I enhanced the clearity of some operational principles).
 ## TaskCatalog
 1.	Unified time representation. As pointed out by the grader, I previously mixed TimeStamp and Time types, which caused ambiguity. I standardized on using TimeStamp for attributes like deadline to maintain consistency across the concept and improve database integration.
 2.	Normalized slack type. In Assignment 2, the slack attribute was sometimes treated as a String. I changed it to a Number type (representing minutes) to ensure consistency and enable arithmetic operations such as computing scheduling buffers.
