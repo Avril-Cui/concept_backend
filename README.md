@@ -49,6 +49,7 @@ A design file explaining changes I made to the concept and application designs a
 
 # `/context`
 Snapshots that confirm that I worked in a reflective and incremental way.
+I didn't save intermediate snapshots of Typescript files because I thought ctx is used for markdown and tracking design progress. However, intermediate versions of my Typescript implementation can be found in these design implementation snapshots in the context section. I also took a snapshot of the final version of code,
 
 ## Running Tests
 - Since one of my concepts is AI-augmented, some times that specific test case might fail. But you can run deno test again, and it's very likely all will pass.
