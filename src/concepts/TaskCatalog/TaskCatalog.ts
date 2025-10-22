@@ -10,7 +10,7 @@ type User = ID;
 type Task = ID; // Represents taskId
 type Duration = number; // e.g., in minutes
 type Flag = boolean;
-type TimeStamp = Date;
+type TimeStamp = number; // Unix timestamp in milliseconds
 
 /**
  * a set of Tasks with
@@ -66,6 +66,25 @@ export default class TaskCatalogConcept {
       return { error: `No tasks found for owner: ${owner}` };
     }
     return { taskTable: userTasks };
+  }
+
+  /**
+   * _getTask (owner: User, taskId: String): (task: Task)
+   *
+   * **requires** exist a task with this taskId and this owner
+   *
+   * **effect** return this task
+   */
+  async _getTask(
+    { owner, taskId }: { owner: User; taskId: Task },
+  ): Promise<{ task: TaskDocument } | { error: string }> {
+    const task = await this.tasks.findOne({ _id: taskId, owner });
+    if (!task) {
+      return {
+        error: `Task with ID ${taskId} not found or not owned by ${owner}`,
+      };
+    }
+    return { task };
   }
 
   /**

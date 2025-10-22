@@ -9,10 +9,19 @@ async function initMongoClient() {
   if (DB_CONN === undefined) {
     throw new Error("Could not find environment variable: MONGODB_URL");
   }
-  const client = new MongoClient(DB_CONN);
+
+  // For MongoDB Atlas with mongodb+srv://, use minimal configuration
+  const client = new MongoClient(DB_CONN, {
+    serverSelectionTimeoutMS: 5000,
+    connectTimeoutMS: 10000,
+  });
+
   try {
+    console.log("🔌 Attempting to connect to MongoDB Atlas...");
     await client.connect();
+    console.log("✅ Successfully connected to MongoDB");
   } catch (e) {
+    console.error("❌ MongoDB connection error details:", e);
     throw new Error("MongoDB connection failed: " + e);
   }
   return client;

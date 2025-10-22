@@ -27,7 +27,7 @@ Deno.test("TaskCatalog Concept Tests", async (t) => {
     duration: number = 60,
     priority: number = 1,
     splittable: boolean = false,
-    deadline?: Date,
+    deadline?: number,
     slack?: number,
     preDependence?: ID[],
     note?: string,
@@ -389,7 +389,7 @@ Deno.test("TaskCatalog Concept Tests", async (t) => {
         180,
         2,
         true,
-        new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+        Date.now() + 2 * 24 * 60 * 60 * 1000,
         15,
         undefined,
         initialNote,
@@ -439,7 +439,7 @@ Deno.test("TaskCatalog Concept Tests", async (t) => {
       const newSplittable = false;
       const newSlack = 20;
       const newNote = "Updated detailed note";
-      const newDeadline = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+      const newDeadline = Date.now() + 5 * 24 * 60 * 60 * 1000;
 
       console.log(`4. Updating duration for task X to ${newDuration}`);
       await concept.updateTaskDuration({
@@ -472,7 +472,7 @@ Deno.test("TaskCatalog Concept Tests", async (t) => {
         note: newNote,
       });
       console.log(
-        `9. Updating deadline for task X to ${newDeadline.toISOString()}`,
+        `9. Updating deadline for task X to ${new Date(newDeadline).toISOString()}`,
       );
       await concept.updateTaskDeadline({
         owner: userBob,
@@ -509,8 +509,8 @@ Deno.test("TaskCatalog Concept Tests", async (t) => {
         "Note should be updated",
       );
       assertEquals(
-        taskX_after_updates?.deadline?.toISOString(),
-        newDeadline.toISOString(),
+        taskX_after_updates?.deadline,
+        newDeadline,
         "Deadline should be updated",
       );
       console.log(

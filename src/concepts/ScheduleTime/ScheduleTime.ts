@@ -38,22 +38,45 @@ export default class ScheduleTimeConcept {
    *
    * **requires** exists at least one time block under this owner
    *
-   * **effects** returns a set of all time blocks under this owner with end greater than the current time
+   * **effects** returns a set of all time blocks under this owner (including past time blocks)
    */
   async _getUserSchedule({ owner }: { owner: User }): Promise<
     Array<{ timeBlock: TimeBlockDocument }> | { error: string }
   > {
-    const currentTime = Date.now();
+    // Modified to return ALL time blocks (past and future) for development purposes
     const blocks = await this.timeBlocks.find({
       owner,
-      end: { $gte: currentTime }, // Filter for time blocks whose end is in the future
     }).toArray();
 
     if (blocks.length === 0) {
-      return { error: `No future time blocks found for owner ${owner}` };
+      return { error: `No time blocks found for owner ${owner}` };
     }
 
     return blocks.map((block) => ({ timeBlock: block }));
+  }
+
+  /**
+   * _getTaskSchedule (owner: User, timeBlockId: String): (timeBlock: TimeBlock)
+   *
+   * **requires** exists at least one time block under this owner with matching timeBlockId
+   *
+   * **effects** return this time block
+   */
+  async _getTaskSchedule(
+    { owner, timeBlockId }: { owner: User; timeBlockId: ID },
+  ): Promise<{ timeBlock: TimeBlockDocument } | { error: string }> {
+    const block = await this.timeBlocks.findOne({
+      _id: timeBlockId,
+      owner,
+    });
+
+    if (!block) {
+      return {
+        error: `No time block found with ID ${timeBlockId} for owner ${owner}`,
+      };
+    }
+
+    return { timeBlock: block };
   }
 
   /**

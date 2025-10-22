@@ -94,7 +94,7 @@ export class GeminiLLM {
         const model = genAI.getGenerativeModel({
           model: "gemini-2.5-flash-lite",
           generationConfig: {
-            maxOutputTokens: 1000,
+            maxOutputTokens: 8000, // Increased to allow longer responses for adaptive scheduling
             temperature: 0.1, // Low temperature for more predictable, deterministic output
           },
         });

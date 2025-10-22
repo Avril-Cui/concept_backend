@@ -16,6 +16,13 @@ state
 		a taskIdSet set of Strings // contains unique ids identifying tasks
 
 actions
+	_getTaskSchedule (owner: User, timeBlockId: String): (timeBlock: TimeBlock)
+		// this is a query
+		requires:
+			exists at least one time block under this owner with matching timeBlockId
+		effect:
+			return this time block
+		
 	_getUserSchedule (owner: User): (timeBlockTable: set of TimeBlocks)
 		// this is a query
 		requires:

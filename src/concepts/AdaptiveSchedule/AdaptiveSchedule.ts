@@ -8,6 +8,7 @@ const PREFIX = "AdaptiveSchedule" + ".";
 
 // Generic types of this concept
 type User = ID;
+type TimeStamp = number; // Unix timestamp in milliseconds
 // Assuming GeminiLLM is handled as a class instance, not a generic type in the state relations directly.
 // The concept refers to 'an llm GeminiLLM', implying an instance that the concept interacts with.
 
@@ -22,8 +23,8 @@ type User = ID;
 interface AdaptiveBlock {
   _id: ID; // Maps to timeBlockId
   owner: User;
-  start: Date; // TimeStamp maps to Date in TS
-  end: Date; // TimeStamp maps to Date in TS
+  start: TimeStamp; // Unix timestamp in milliseconds
+  end: TimeStamp; // Unix timestamp in milliseconds
   taskIdSet: ID[];
 }
 
@@ -48,8 +49,8 @@ interface DroppedTask {
 interface LlmLikelyResponse {
   analysis: string; // Added as per prompt example structure
   adaptiveBlocks: Array<{
-    start: string; // ISO string for Date
-    end: string; // ISO string for Date
+    start: number | string; // Unix timestamp in milliseconds or ISO string
+    end: number | string; // Unix timestamp in milliseconds or ISO string
     taskIds: ID[];
   }>;
   droppedTasks: Array<{
@@ -63,9 +64,19 @@ export default class AdaptiveScheduleConcept {
   droppedTasks: Collection<DroppedTask>;
   private llm: GeminiLLM;
 
-  constructor(private readonly db: Db, llmConfig: GeminiConfig) {
+  constructor(private readonly db: Db, llmConfig?: GeminiConfig) {
     this.adaptiveBlocks = this.db.collection(PREFIX + "adaptiveBlocks");
     this.droppedTasks = this.db.collection(PREFIX + "droppedTasks");
+
+    // Load config from environment if not provided
+    if (!llmConfig) {
+      llmConfig = {
+        apiKey: Deno.env.get("GEMINI_API_KEY") || "",
+        model: Deno.env.get("GEMINI_MODEL") || "gemini-2.0-flash-exp",
+        configPath: Deno.env.get("GEMINI_CONFIG") || "./geminiConfig.json"
+      };
+    }
+
     this.llm = new GeminiLLM(llmConfig);
 
     // Ensure indexes for efficient lookup and uniqueness checks
@@ -132,15 +143,15 @@ export default class AdaptiveScheduleConcept {
    *   return b.timeBlockId;
    */
   async addTimeBlock(
-    { owner, start, end }: { owner: User; start: Date; end: Date },
+    { owner, start, end }: { owner: User; start: TimeStamp; end: TimeStamp },
   ): Promise<{ timeBlockId: ID } | { error: string }> {
-    if (!(start instanceof Date) || isNaN(start.getTime())) {
+    if (typeof start !== "number" || isNaN(start) || start < 0) {
       return { error: "Invalid 'start' TimeStamp." };
     }
-    if (!(end instanceof Date) || isNaN(end.getTime())) {
+    if (typeof end !== "number" || isNaN(end) || end < 0) {
       return { error: "Invalid 'end' TimeStamp." };
     }
-    if (start.getTime() >= end.getTime()) {
+    if (start >= end) {
       return { error: "'start' TimeStamp must be before 'end' TimeStamp." };
     }
 
@@ -192,17 +203,17 @@ export default class AdaptiveScheduleConcept {
     { owner, taskId, start, end }: {
       owner: User;
       taskId: ID;
-      start: Date;
-      end: Date;
+      start: TimeStamp;
+      end: TimeStamp;
     },
   ): Promise<{ timeBlockId: ID } | { error: string }> {
-    if (!(start instanceof Date) || isNaN(start.getTime())) {
+    if (typeof start !== "number" || isNaN(start) || start < 0) {
       return { error: "Invalid 'start' TimeStamp." };
     }
-    if (!(end instanceof Date) || isNaN(end.getTime())) {
+    if (typeof end !== "number" || isNaN(end) || end < 0) {
       return { error: "Invalid 'end' TimeStamp." };
     }
-    if (start.getTime() >= end.getTime()) {
+    if (start >= end) {
       return { error: "'start' TimeStamp must be before 'end' TimeStamp." };
     }
 
@@ -255,6 +266,41 @@ export default class AdaptiveScheduleConcept {
   }
 
   /**
+   * deleteAdaptiveBlock (owner: User, timeBlockId: String): Empty
+   *
+   * **requires**
+   *   an adaptive time block exists with this timeBlockId and owner
+   *
+   * **effect**
+   *   delete the adaptive time block with this timeBlockId
+   */
+  async deleteAdaptiveBlock(
+    { owner, timeBlockId }: { owner: User; timeBlockId: ID },
+  ): Promise<Empty | { error: string }> {
+    try {
+      const result = await this.adaptiveBlocks.deleteOne({
+        _id: timeBlockId,
+        owner,
+      });
+
+      if (result.deletedCount === 0) {
+        return {
+          error: "Adaptive block not found or not owned by user.",
+        };
+      }
+
+      console.log(`Effect: Deleted adaptive block ${timeBlockId} for owner ${owner}.`);
+      return {};
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error
+        ? error.message
+        : String(error);
+      console.error(`Error in deleteAdaptiveBlock: ${errorMessage}`);
+      return { error: `Failed to delete adaptive block: ${errorMessage}` };
+    }
+  }
+
+  /**
    * async requestAdaptiveScheduleAI (owner: User, contexted_prompt: String): (adaptiveBlockTable: set of AdaptiveBlocks, droppedTaskSet: set of droppedTasks)
    *
    * **effect**
@@ -276,7 +322,18 @@ export default class AdaptiveScheduleConcept {
     }
   > {
     try {
-      const llmResponseText = await this.llm.executeLLM(contexted_prompt);
+      let llmResponseText = await this.llm.executeLLM(contexted_prompt);
+
+      // Strip markdown code blocks if present (```json ... ``` or ``` ... ```)
+      llmResponseText = llmResponseText.trim();
+      if (llmResponseText.startsWith('```')) {
+        // Remove opening ```json or ```
+        llmResponseText = llmResponseText.replace(/^```(?:json)?\s*\n?/, '');
+        // Remove closing ```
+        llmResponseText = llmResponseText.replace(/\n?```\s*$/, '');
+        llmResponseText = llmResponseText.trim();
+      }
+
       let llmResponse: LlmLikelyResponse;
 
       try {
@@ -304,16 +361,39 @@ export default class AdaptiveScheduleConcept {
       ) {
         return { error: "LLM response missing 'adaptiveBlocks' array." };
       }
-      if (
-        !llmResponse.droppedTasks || !Array.isArray(llmResponse.droppedTasks)
-      ) {
-        return { error: "LLM response missing 'droppedTasks' array." };
+      // Handle both droppedTasks and droppedTaskIds formats
+      if (!llmResponse.droppedTasks) {
+        // If droppedTasks is missing, check for droppedTaskIds and convert
+        const altResponse = llmResponse as any;
+        if (altResponse.droppedTaskIds && Array.isArray(altResponse.droppedTaskIds)) {
+          // Convert droppedTaskIds to droppedTasks format
+          llmResponse.droppedTasks = altResponse.droppedTaskIds.map((taskId: ID) => ({
+            taskId,
+            reason: "Not scheduled in adaptive plan"
+          }));
+        } else {
+          // Default to empty array if neither format is present
+          llmResponse.droppedTasks = [];
+        }
+      }
+
+      if (!Array.isArray(llmResponse.droppedTasks)) {
+        return { error: "LLM response 'droppedTasks' must be an array." };
       }
 
       const assignedBlockIds: ID[] = [];
       for (const block of llmResponse.adaptiveBlocks) {
-        const start = new Date(block.start);
-        const end = new Date(block.end);
+        // Convert start and end to Unix timestamps if they're ISO strings
+        let start = block.start;
+        let end = block.end;
+
+        // Check if start/end are strings (ISO format) and convert to numbers
+        if (typeof start === 'string') {
+          start = new Date(start).getTime();
+        }
+        if (typeof end === 'string') {
+          end = new Date(end).getTime();
+        }
 
         for (const taskId of block.taskIds) {
           const assignResult = await this.assignAdaptiveSchedule({

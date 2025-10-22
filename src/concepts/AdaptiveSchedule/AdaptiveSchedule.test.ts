@@ -54,8 +54,8 @@ interface Task {
 interface TimeBlock {
   timeBlockId: ID;
   owner: ID;
-  start: Date;
-  end: Date;
+  start: number; // Unix timestamp in milliseconds
+  end: number; // Unix timestamp in milliseconds
   taskIdSet: ID[];
 }
 
@@ -69,8 +69,8 @@ interface Session {
   sessionId: ID;
   isPaused: boolean;
   isActive: boolean;
-  start?: Date;
-  end?: Date;
+  start?: number; // Unix timestamp in milliseconds
+  end?: number; // Unix timestamp in milliseconds
   linkedTaskId?: ID;
   interruptReason?: string;
 }
@@ -87,8 +87,8 @@ interface Preference {
 interface AdaptiveBlockForPrompt {
   _id: ID;
   owner: ID;
-  start: Date;
-  end: Date;
+  start: number; // Unix timestamp in milliseconds
+  end: number; // Unix timestamp in milliseconds
   taskIdSet: ID[];
 }
 // --- END HELPER TYPES ---
@@ -101,7 +101,7 @@ function tasksToString(tasks: Task[]): string {
   if (tasks.length === 0) return "  (No tasks to schedule)";
   return tasks.map((task) =>
     `  - Task ID: ${task.taskId}, Name: ${task.taskName}, Priority: ${task.priority}, Duration: ${task.duration} min, Splittable: ${task.splittable}, Deadline: ${
-      task.deadline?.toISOString() || "N/A"
+      task.deadline ? new Date(task.deadline).toISOString() : "N/A"
     }` +
     `${task.note ? `, Note: "${task.note}"` : ""}`
   ).join("\n");
@@ -113,7 +113,7 @@ function tasksToString(tasks: Task[]): string {
 function scheduleToString(schedule: Schedule): string {
   if (schedule.timeBlocks.length === 0) return "  (No planned schedule)";
   return schedule.timeBlocks.map((block) =>
-    `  - Block ID: ${block.timeBlockId}, Start: ${block.start.toISOString()}, End: ${block.end.toISOString()}, Tasks: [${
+    `  - Block ID: ${block.timeBlockId}, Start: ${new Date(block.start).toISOString()}, End: ${new Date(block.end).toISOString()}, Tasks: [${
       block.taskIdSet.join(", ")
     }]`
   ).join("\n");
@@ -126,8 +126,8 @@ function routineToString(routine: Routine): string {
   if (routine.sessions.length === 0) return "  (No actual routine)";
   return routine.sessions.map((session) =>
     `  - Session ID: ${session.sessionId}, Name: ${session.sessionName}, Start: ${
-      session.start?.toISOString() || "N/A"
-    }, End: ${session.end?.toISOString() || "N/A"}, Linked Task: ${
+      session.start ? new Date(session.start).toISOString() : "N/A"
+    }, End: ${session.end ? new Date(session.end).toISOString() : "N/A"}, Linked Task: ${
       session.linkedTaskId || "N/A"
     }`
   ).join("\n");
@@ -139,7 +139,7 @@ function routineToString(routine: Routine): string {
 function adaptiveBlocksToString(blocks: AdaptiveBlockForPrompt[]): string {
   if (blocks.length === 0) return "  (No existing adaptive blocks)";
   return blocks.map((block) =>
-    `  - Block ID: ${block._id}, Start: ${block.start.toISOString()}, End: ${block.end.toISOString()}, Tasks: [${
+    `  - Block ID: ${block._id}, Start: ${new Date(block.start).toISOString()}, End: ${new Date(block.end).toISOString()}, Tasks: [${
       block.taskIdSet.join(", ")
     }]`
   ).join("\n");
@@ -291,7 +291,7 @@ async function logCurrentAdaptiveSchedule(
     } else {
       result.adaptiveBlockTable.forEach((block) => {
         console.log(
-          `    - Block ID: ${block._id}, Start: ${block.start.toISOString()}, End: ${block.end.toISOString()}, Tasks: [${
+          `    - Block ID: ${block._id}, Start: ${new Date(block.start).toISOString()}, End: ${new Date(block.end).toISOString()}, Tasks: [${
             block.taskIdSet.join(", ")
           }]`,
         );
@@ -413,36 +413,36 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
   const plannedScheduleBlock1: TimeBlock = {
     timeBlockId: "planned-1" as ID,
     owner: userA,
-    start: new Date("2025-10-04T09:00:00Z"),
-    end: new Date("2025-10-04T11:00:00Z"),
+    start: new Date("2025-10-04T09:00:00Z").getTime(),
+    end: new Date("2025-10-04T11:00:00Z").getTime(),
     taskIdSet: [taskProjectProposalId],
   };
   const plannedScheduleBlock2: TimeBlock = {
     timeBlockId: "planned-2" as ID,
     owner: userA,
-    start: new Date("2025-10-04T14:00:00Z"),
-    end: new Date("2025-10-04T15:00:00Z"),
+    start: new Date("2025-10-04T14:00:00Z").getTime(),
+    end: new Date("2025-10-04T15:00:00Z").getTime(),
     taskIdSet: [taskReviewPRId],
   };
   const plannedScheduleBlock3: TimeBlock = {
     timeBlockId: "planned-3" as ID,
     owner: userA,
-    start: new Date("2025-10-04T17:00:00Z"),
-    end: new Date("2025-10-04T18:00:00Z"),
+    start: new Date("2025-10-04T17:00:00Z").getTime(),
+    end: new Date("2025-10-04T18:00:00Z").getTime(),
     taskIdSet: [taskGymId],
   };
   const plannedScheduleBlock4: TimeBlock = {
     timeBlockId: "planned-4" as ID,
     owner: userA,
-    start: new Date("2025-10-04T18:00:00Z"),
-    end: new Date("2025-10-04T18:30:00Z"),
+    start: new Date("2025-10-04T18:00:00Z").getTime(),
+    end: new Date("2025-10-04T18:30:00Z").getTime(),
     taskIdSet: [taskDinnerId],
   };
   const plannedScheduleBlock5: TimeBlock = {
     timeBlockId: "planned-5" as ID,
     owner: userA,
-    start: new Date("2025-10-04T19:00:00Z"),
-    end: new Date("2025-10-04T19:30:00Z"),
+    start: new Date("2025-10-04T19:00:00Z").getTime(),
+    end: new Date("2025-10-04T19:30:00Z").getTime(),
     taskIdSet: [taskSpanishId],
   };
   const plannedSchedule: Schedule = {
@@ -462,8 +462,8 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     sessionId: freshID(),
     isPaused: false,
     isActive: false,
-    start: new Date("2025-10-04T09:00:00Z"),
-    end: new Date("2025-10-04T10:30:00Z"),
+    start: new Date("2025-10-04T09:00:00Z").getTime(),
+    end: new Date("2025-10-04T10:30:00Z").getTime(),
     interruptReason: "Unexpected urgent meeting took longer than expected",
   };
   const actualRoutineSession2: Session = {
@@ -472,8 +472,8 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     sessionId: freshID(),
     isPaused: true,
     isActive: false, // Paused implies incomplete
-    start: new Date("2025-10-04T10:30:00Z"),
-    end: new Date("2025-10-04T11:00:00Z"),
+    start: new Date("2025-10-04T10:30:00Z").getTime(),
+    end: new Date("2025-10-04T11:00:00Z").getTime(),
     linkedTaskId: taskProjectProposalId, // Partially completed
     interruptReason:
       "Had to stop due to lunch break, only completed 30 minutes",
@@ -507,28 +507,28 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
           "Schedule adjusted due to unexpected morning meeting and interrupted project proposal. High priority tasks (Project Proposal, Review PRs) are rescheduled first. Gym, Dinner, and Spanish Study are placed in the evening to accommodate. No tasks were dropped.",
         adaptiveBlocks: [
           {
-            start: new Date("2025-10-04T13:00:00Z").toISOString(), // 1:00 PM UTC
-            end: new Date("2025-10-04T14:30:00Z").toISOString(), // 2:30 PM UTC (90 min for project proposal)
+            start: new Date("2025-10-04T13:00:00Z").getTime(), // 1:00 PM UTC
+            end: new Date("2025-10-04T14:30:00Z").getTime(), // 2:30 PM UTC (90 min for project proposal)
             taskIds: [taskProjectProposalId],
           },
           {
-            start: new Date("2025-10-04T14:30:00Z").toISOString(), // 2:30 PM UTC
-            end: new Date("2025-10-04T15:30:00Z").toISOString(), // 3:30 PM UTC (60 min for review PRs)
+            start: new Date("2025-10-04T14:30:00Z").getTime(), // 2:30 PM UTC
+            end: new Date("2025-10-04T15:30:00Z").getTime(), // 3:30 PM UTC (60 min for review PRs)
             taskIds: [taskReviewPRId],
           },
           {
-            start: new Date("2025-10-04T17:00:00Z").toISOString(), // 5:00 PM UTC
-            end: new Date("2025-10-04T18:00:00Z").toISOString(), // 6:00 PM UTC (60 min for gym)
+            start: new Date("2025-10-04T17:00:00Z").getTime(), // 5:00 PM UTC
+            end: new Date("2025-10-04T18:00:00Z").getTime(), // 6:00 PM UTC (60 min for gym)
             taskIds: [taskGymId],
           },
           {
-            start: new Date("2025-10-04T18:00:00Z").toISOString(), // 6:00 PM UTC
-            end: new Date("2025-10-04T18:30:00Z").toISOString(), // 6:30 PM UTC (30 min for dinner)
+            start: new Date("2025-10-04T18:00:00Z").getTime(), // 6:00 PM UTC
+            end: new Date("2025-10-04T18:30:00Z").getTime(), // 6:30 PM UTC (30 min for dinner)
             taskIds: [taskDinnerId],
           },
           {
-            start: new Date("2025-10-04T18:30:00Z").toISOString(), // 6:30 PM UTC
-            end: new Date("2025-10-04T19:00:00Z").toISOString(), // 7:00 PM UTC (30 min for spanish)
+            start: new Date("2025-10-04T18:30:00Z").getTime(), // 6:30 PM UTC
+            end: new Date("2025-10-04T19:00:00Z").getTime(), // 7:00 PM UTC (30 min for spanish)
             taskIds: [taskSpanishId],
           },
         ],
@@ -741,18 +741,18 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
         new Date().getDate(),
         11,
         0,
-      ); // 11:00 AM
+      ).getTime(); // 11:00 AM
       const end = new Date(
         new Date().getFullYear(),
         new Date().getMonth(),
         new Date().getDate(),
         12,
         0,
-      ); // 12:00 PM
+      ).getTime(); // 12:00 PM
 
       // Attempt to add a time block that already exists (expect error)
       console.log(
-        `  Action: addTimeBlock (first call) for user ${userA}, from ${start.toISOString()} to ${end.toISOString()}`,
+        `  Action: addTimeBlock (first call) for user ${userA}, from ${new Date(start).toISOString()} to ${new Date(end).toISOString()}`,
       );
       const addBlockResult = await concept.addTimeBlock({
         owner: userA,
@@ -773,7 +773,7 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
       );
 
       console.log(
-        `  Action: addTimeBlock (duplicate call) for user ${userA}, from ${start.toISOString()} to ${end.toISOString()}`,
+        `  Action: addTimeBlock (duplicate call) for user ${userA}, from ${new Date(start).toISOString()} to ${new Date(end).toISOString()}`,
       );
       const duplicateAddBlockResult = await concept.addTimeBlock({
         owner: userA,
@@ -798,7 +798,7 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
       // Assign a task
       const uniqueTaskId = freshID();
       console.log(
-        `  Action: assignAdaptiveSchedule for user ${userA}, task ${uniqueTaskId} to block starting ${start.toISOString()}`,
+        `  Action: assignAdaptiveSchedule for user ${userA}, task ${uniqueTaskId} to block starting ${new Date(start).toISOString()}`,
       );
       const assignResult = await concept.assignAdaptiveSchedule({
         owner: userA,
@@ -820,7 +820,7 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
 
       // Attempt to assign the *same* task to the *same* block again (expect error)
       console.log(
-        `  Action: assignAdaptiveSchedule (duplicate task) for user ${userA}, task ${uniqueTaskId} to block starting ${start.toISOString()}`,
+        `  Action: assignAdaptiveSchedule (duplicate task) for user ${userA}, task ${uniqueTaskId} to block starting ${new Date(start).toISOString()}`,
       );
       const duplicateAssignResult = await concept.assignAdaptiveSchedule({
         owner: userA,
@@ -853,7 +853,7 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
       // Assign a *different* task to the *same* block (expect success)
       const anotherTaskId = freshID();
       console.log(
-        `  Action: assignAdaptiveSchedule (new task) for user ${userA}, task ${anotherTaskId} to block starting ${start.toISOString()}`,
+        `  Action: assignAdaptiveSchedule (new task) for user ${userA}, task ${anotherTaskId} to block starting ${new Date(start).toISOString()}`,
       );
       const newAssignResult = await concept.assignAdaptiveSchedule({
         owner: userA,
@@ -901,7 +901,7 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     console.log("\n--- Interesting Scenario 2: Invalid Inputs ---");
     const testUser = "user:InvalidUser" as ID;
     const testTaskId = "task:InvalidTask" as ID;
-    const nowLocal = new Date(); // Use a local 'now' for this scenario
+    const nowLocal = Date.now(); // Use a local 'now' for this scenario
 
     // Invalid start/end times for addTimeBlock
     console.log("  Action: addTimeBlock with start >= end");
@@ -920,29 +920,29 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
       "'start' TimeStamp must be before 'end' TimeStamp.",
     );
 
-    // Invalid start/end date objects
-    console.log("  Action: addTimeBlock with invalid Date objects (start)");
+    // Invalid start/end timestamps
+    console.log("  Action: addTimeBlock with invalid timestamp (start)");
     const invalidDateResult1 = await concept.addTimeBlock({
       owner: testUser,
-      start: new Date("invalid"),
+      start: NaN,
       end: nowLocal,
     });
     assert(
       "error" in invalidDateResult1,
-      "Should error with invalid start Date object",
+      "Should error with invalid start timestamp",
     );
     console.log(`  Output: ${JSON.stringify(invalidDateResult1)}`);
     assertEquals(invalidDateResult1.error, "Invalid 'start' TimeStamp.");
 
-    console.log("  Action: addTimeBlock with invalid Date objects (end)");
+    console.log("  Action: addTimeBlock with invalid timestamp (end)");
     const invalidDateResult2 = await concept.addTimeBlock({
       owner: testUser,
       start: nowLocal,
-      end: new Date("invalid"),
+      end: NaN,
     });
     assert(
       "error" in invalidDateResult2,
-      "Should error with invalid end Date object",
+      "Should error with invalid end timestamp",
     );
     console.log(`  Output: ${JSON.stringify(invalidDateResult2)}`);
     assertEquals(invalidDateResult2.error, "Invalid 'end' TimeStamp.");
@@ -988,8 +988,8 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     // Unassign non-existent task from an existing block
     const addBlockForTestResult = await concept.addTimeBlock({
       owner: testUser,
-      start: new Date(nowLocal.getTime() + 1000),
-      end: new Date(nowLocal.getTime() + 3600 * 1000),
+      start: nowLocal + 1000,
+      end: nowLocal + 3600 * 1000,
     }); // Block for 1 hour later
     if ("error" in addBlockForTestResult) {
       throw new Error(
@@ -1082,41 +1082,41 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
       new Date().getDate(),
       currentHour + 2,
       0,
-    );
+    ).getTime();
     const llmBlockC1End = new Date(
       new Date().getFullYear(),
       new Date().getMonth(),
       new Date().getDate(),
       currentHour + 3,
       0,
-    );
+    ).getTime();
     const llmBlockC2Start = new Date(
       new Date().getFullYear(),
       new Date().getMonth(),
       new Date().getDate(),
       currentHour + 3,
       0,
-    );
+    ).getTime();
     const llmBlockC2End = new Date(
       new Date().getFullYear(),
       new Date().getMonth(),
       new Date().getDate(),
       currentHour + 4,
       0,
-    );
+    ).getTime();
     const llmDroppedTaskC3Reason = "Not enough time for low priority task.";
 
     mockGeminiLLM.mockResponse = JSON.stringify({
       analysis: "New schedule for Charlie.", // Added analysis field
       adaptiveBlocks: [
         {
-          start: llmBlockC1Start.toISOString(),
-          end: llmBlockC1End.toISOString(),
+          start: llmBlockC1Start,
+          end: llmBlockC1End,
           taskIds: [taskC1],
         },
         {
-          start: llmBlockC2Start.toISOString(),
-          end: llmBlockC2End.toISOString(),
+          start: llmBlockC2Start,
+          end: llmBlockC2End,
           taskIds: [taskC2],
         },
       ],
@@ -1301,38 +1301,39 @@ Deno.test("AdaptiveSchedule Concept Tests", async (t) => {
     console.log("\n--- Interesting Scenario 4: Multiple Users ---");
     const userD = "user:David" as ID;
     const userE = "user:Eve" as ID;
-    const nowLocal = new Date(); // Use a local 'now' for this scenario
+    const nowLocal = Date.now(); // Use a local 'now' for this scenario
+    const nowDate = new Date(nowLocal);
 
     const startD = new Date(
-      nowLocal.getFullYear(),
-      nowLocal.getMonth(),
-      nowLocal.getDate(),
+      nowDate.getFullYear(),
+      nowDate.getMonth(),
+      nowDate.getDate(),
       13,
       0,
-    );
+    ).getTime();
     const endD = new Date(
-      nowLocal.getFullYear(),
-      nowLocal.getMonth(),
-      nowLocal.getDate(),
+      nowDate.getFullYear(),
+      nowDate.getMonth(),
+      nowDate.getDate(),
       14,
       0,
-    );
+    ).getTime();
     const taskD1 = "task:gym" as ID;
 
     const startE = new Date(
-      nowLocal.getFullYear(),
-      nowLocal.getMonth(),
-      nowLocal.getDate(),
+      nowDate.getFullYear(),
+      nowDate.getMonth(),
+      nowDate.getDate(),
       15,
       0,
-    );
+    ).getTime();
     const endE = new Date(
-      nowLocal.getFullYear(),
-      nowLocal.getMonth(),
-      nowLocal.getDate(),
+      nowDate.getFullYear(),
+      nowDate.getMonth(),
+      nowDate.getDate(),
       16,
       0,
-    );
+    ).getTime();
     const taskE1 = "task:meeting" as ID;
 
     // User D actions

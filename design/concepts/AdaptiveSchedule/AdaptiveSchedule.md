@@ -57,6 +57,12 @@ actions
 			create a new adaptive time block $b$ with this owner, start, and end;
 			assign $b$ an empty taskIdSet;
 			return b.timeBlockId;
+	
+	deleteTimeBlock (owner: User, timeBlockId: String)
+		requires:
+			exists a time block with matching owner and timeBlockId
+		effect:
+			remove the time block
    
 	assignAdaptiveSchedule (owner: User, taskId: String, start: TimeStamp, end: TimeStamp): (timeBlockId: String)
 		requires:

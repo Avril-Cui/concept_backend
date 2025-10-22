@@ -30,6 +30,10 @@ actions
         requires: exist at least one task with this owner
         effect: returns ALL tasks under this owner
     
+    _getTask (owner: User, taskId: String): (task: Task)
+        requires: exist a task with this taskId and this owner
+        effect: return this task
+    
     createTask (
         owner: User, taskName: String, category: String, duration: Duration, priority: Number, splittable: Flag, deadline?: TimeStamp, slack?: Number, preDependence?: set of Tasks, note?: String
     ): (task: Task)

@@ -1,6 +1,7 @@
 import { Collection, Db } from "npm:mongodb"; // Removed FindAndModifyResult import
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
+import { getCurrentTime } from "@utils/time.ts";
 
 // Declare collection prefix, use concept name
 const PREFIX = "RoutineLog" + ".";
@@ -9,6 +10,7 @@ const PREFIX = "RoutineLog" + ".";
 type User = ID;
 type SessionId = ID;
 type LinkedTaskId = ID;
+type TimeStamp = number; // Unix timestamp in milliseconds
 
 /**
  * A set of Sessions with
@@ -28,8 +30,8 @@ interface Session {
   sessionName: string;
   isPaused: boolean;
   isActive: boolean;
-  start?: string; // ISO 8601 string for TimeStamp
-  end?: string; // ISO 8601 string for TimeStamp
+  start?: TimeStamp; // Unix timestamp in milliseconds
+  end?: TimeStamp; // Unix timestamp in milliseconds
   linkedTaskId?: LinkedTaskId;
   interruptReason?: string;
 }
@@ -147,7 +149,7 @@ export default class RoutineLogConcept {
     console.log(
       `Action: startSession for owner: ${owner}, sessionId: ${sessionId}`,
     );
-    const currentTime = new Date().toISOString();
+    const currentTime = getCurrentTime();
 
     // The result is inferred as WithId<Session> | null by Deno's npm:mongodb types.
     const result = await this.sessions.findOneAndUpdate(
@@ -189,7 +191,7 @@ export default class RoutineLogConcept {
     console.log(
       `Action: endSession for owner: ${owner}, sessionId: ${sessionId}`,
     );
-    const currentTime = new Date().toISOString();
+    const currentTime = getCurrentTime();
 
     // The result is inferred as WithId<Session> | null by Deno's npm:mongodb types.
     const result = await this.sessions.findOneAndUpdate(
@@ -234,7 +236,7 @@ export default class RoutineLogConcept {
     console.log(
       `Action: interruptSession for owner: ${owner}, sessionId: ${sessionId}, reason: "${interruptReason}"`,
     );
-    const currentTime = new Date().toISOString();
+    const currentTime = getCurrentTime();
 
     // The result is inferred as WithId<Session> | null by Deno's npm:mongodb types.
     const result = await this.sessions.findOneAndUpdate(
