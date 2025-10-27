@@ -317,7 +317,7 @@ export default class AdaptiveScheduleConcept {
   async requestAdaptiveScheduleAI(
     { owner, contexted_prompt }: { owner: User; contexted_prompt: string },
   ): Promise<
-    { adaptiveBlockTable: AdaptiveBlock[]; droppedTaskSet: DroppedTask[] } | {
+    { adaptiveBlockTable: AdaptiveBlock[]; droppedTaskSet: DroppedTask[]; analysis: string } | {
       error: string;
     }
   > {
@@ -355,6 +355,10 @@ export default class AdaptiveScheduleConcept {
       ) { // Added validation for analysis, checking for empty string too
         return { error: "LLM response missing or empty 'analysis' string." };
       }
+
+      // Store the analysis
+      const analysis = llmResponse.analysis;
+
       if (
         !llmResponse.adaptiveBlocks ||
         !Array.isArray(llmResponse.adaptiveBlocks)
@@ -465,6 +469,7 @@ export default class AdaptiveScheduleConcept {
       return {
         adaptiveBlockTable: finalAdaptiveBlocks,
         droppedTaskSet: finalDroppedTasks,
+        analysis: analysis,
       };
     } catch (error: unknown) { // Explicitly type error as unknown
       const errorMessage = error instanceof Error
