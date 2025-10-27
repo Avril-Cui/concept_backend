@@ -19,6 +19,7 @@ type TimeStamp = number; // Unix timestamp in milliseconds
  *   a sessionId String (unique ID)
  *   an isPaused Flag
  *   an isActive Flag
+ *   an isDone Flag (whether the task was completed)
  *   a start TimeStamp (optional)
  *   an end TimeStamp (optional)
  *   a linkedTaskId String (optional)
@@ -30,6 +31,7 @@ interface Session {
   sessionName: string;
   isPaused: boolean;
   isActive: boolean;
+  isDone: boolean; // Whether the task was completed
   start?: TimeStamp; // Unix timestamp in milliseconds
   end?: TimeStamp; // Unix timestamp in milliseconds
   linkedTaskId?: LinkedTaskId;
@@ -113,6 +115,7 @@ export default class RoutineLogConcept {
       sessionName,
       isPaused: false,
       isActive: false,
+      isDone: false,
       start: undefined,
       end: undefined,
       linkedTaskId: linkedTaskId,
@@ -141,14 +144,16 @@ export default class RoutineLogConcept {
    *   set session.isActive as True
    */
   async startSession(
-    { owner, session: { _id: sessionId } }: {
+    { owner, session }: {
       owner: User;
       session: { _id: SessionId };
     },
   ): Promise<Empty | { error: string }> {
     console.log(
-      `Action: startSession for owner: ${owner}, sessionId: ${sessionId}`,
+      `Action: startSession for owner: ${owner}, session:`, session,
     );
+    const sessionId = session._id;
+    console.log(`Extracted sessionId: ${sessionId}`);
     const currentTime = getCurrentTime();
 
     // The result is inferred as WithId<Session> | null by Deno's npm:mongodb types.
@@ -172,7 +177,7 @@ export default class RoutineLogConcept {
   }
 
   /**
-   * endSession(owner: User, session: { _id: SessionId }): Empty
+   * endSession(owner: User, session: { _id: SessionId }, isDone: Flag): Empty
    *
    * **requires**
    *   session exists and is owned by owner and has isActive as True
@@ -181,22 +186,24 @@ export default class RoutineLogConcept {
    *   get the current TimeStamp;
    *   set session.end = current TimeStamp;
    *   set session.isActive as False;
+   *   set session.isDone = isDone;
    */
   async endSession(
-    { owner, session: { _id: sessionId } }: {
+    { owner, session: { _id: sessionId }, isDone }: {
       owner: User;
       session: { _id: SessionId };
+      isDone: boolean;
     },
   ): Promise<Empty | { error: string }> {
     console.log(
-      `Action: endSession for owner: ${owner}, sessionId: ${sessionId}`,
+      `Action: endSession for owner: ${owner}, sessionId: ${sessionId}, isDone: ${isDone}`,
     );
     const currentTime = getCurrentTime();
 
     // The result is inferred as WithId<Session> | null by Deno's npm:mongodb types.
     const result = await this.sessions.findOneAndUpdate(
       { _id: sessionId, owner, isActive: true }, // Requirements: exists, owned by owner, currently active
-      { $set: { end: currentTime, isActive: false } },
+      { $set: { end: currentTime, isActive: false, isDone: isDone } },
       { returnDocument: "after" },
     );
 
@@ -209,7 +216,7 @@ export default class RoutineLogConcept {
       };
     }
 
-    console.log(`Effect: Session ${sessionId} ended at ${currentTime}.`);
+    console.log(`Effect: Session ${sessionId} ended at ${currentTime} with isDone: ${isDone}.`);
     return {};
   }
 
@@ -247,6 +254,7 @@ export default class RoutineLogConcept {
           isPaused: true,
           interruptReason: interruptReason,
           isActive: false,
+          isDone: false, // Interrupted sessions are not done
         },
       }, // Also set isActive to false as it's an end event
       { returnDocument: "after" },
@@ -266,5 +274,62 @@ export default class RoutineLogConcept {
       `Effect: Session ${sessionId} interrupted at ${currentTime} with reason: "${interruptReason}".`,
     );
     return {};
+  }
+
+  /**
+   * deleteSession(owner: User, session: { _id: SessionId }): Empty
+   *
+   * **requires**
+   *   session exists and is owned by owner
+   *
+   * **effects**
+   *   delete the session from the database
+   */
+  async deleteSession(
+    { owner, session: { _id: sessionId } }: {
+      owner: User;
+      session: { _id: SessionId };
+    },
+  ): Promise<Empty | { error: string }> {
+    console.log(
+      `Action: deleteSession for owner: ${owner}, sessionId: ${sessionId}`,
+    );
+
+    const result = await this.sessions.deleteOne({ _id: sessionId, owner });
+
+    if (result.deletedCount === 0) {
+      console.log(
+        `Error: deleteSession failed. Session not found or not owned by user.`,
+      );
+      return {
+        error: "Session not found or not owned by user.",
+      };
+    }
+
+    console.log(`Effect: Session ${sessionId} deleted.`);
+    return {};
+  }
+
+  /**
+   * migrateExistingSessions(): Empty
+   *
+   * **effects**
+   *   Set isDone=true for all sessions that don't have isDone field (existing sessions)
+   */
+  async migrateExistingSessions(): Promise<{ updated: number } | { error: string }> {
+    console.log('Migration: Setting isDone=true for all existing sessions');
+
+    try {
+      const result = await this.sessions.updateMany(
+        { isDone: { $exists: false } }, // Find sessions without isDone field
+        { $set: { isDone: true } } // Set them as done
+      );
+
+      console.log(`Migration: Updated ${result.modifiedCount} sessions`);
+      return { updated: result.modifiedCount };
+    } catch (error: any) {
+      console.error('Migration error:', error);
+      return { error: `Migration failed: ${error.message}` };
+    }
   }
 }

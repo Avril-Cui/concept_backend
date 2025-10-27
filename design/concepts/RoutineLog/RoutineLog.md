@@ -14,6 +14,7 @@ state
         a sessionId String    // this is an unique ID
         an isPaused Flag
         an isActive Flag
+        an isComplete Flag
         a start TimeStamp (optional)
         an end TimeStamp (optional)
         a linkedTaskId String (optional)  // this is the unique id identifying tasks
@@ -43,13 +44,14 @@ actions
             set session.start = current TimeStamp;
             set session.isActive as True
     
-    endSession(owner: User, session: Session)
+    endSession(owner: User, session: Session, isDone: Flag)
         requires:
-            session exists and is owned by owner and has isActive as True
+            session exists and is owned by owner and has isActive as True and has isDone as False
         effect:
             get the current TimeStamp;
             set session.end = current TimeStamp;
             set session.isActive as False;
+            set isDone as the given isDone flag;
     
     interruptSession(owner: User, session: Session, interruptReason: String)
         requires:
