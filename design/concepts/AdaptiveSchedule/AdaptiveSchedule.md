@@ -81,6 +81,7 @@ actions
 			for each adaptive block in llm's returned adaptiveBlocks, assign the task id to the corresponding adaptive block with matching (owner, start, end) using the same logic as assignAdaptiveSchedule;
 			for each dropped task in droppedTasks, add to state with (taskId, owner, reason) 
 			return the set of all AdaptiveBlocks and the set of all droppedTasks under this owner;
+			also return the analysis from the AI;
 
 	unassignBlock (owner: User, taskId: String, timeBlockId: String)
 		requires:

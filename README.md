@@ -1,4 +1,7 @@
 # Source code for implementation and testing
+# Updated design
+See my updates for my concept design here: `/design/results/design2.md`
+
 ## `/src/concepts/`
 Contains the implementation of four core concepts:
 - **TaskCatalog**: Manages tasks with dependencies, priorities, deadlines, and scheduling
