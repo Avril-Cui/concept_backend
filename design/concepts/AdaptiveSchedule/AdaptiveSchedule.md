@@ -88,4 +88,10 @@ actions
 			 taskId exists in this time block's taskIdSet;
 		effect:
 			remove taskId from that block's taskIdSet
+	
+	deleteDroppedTask (taskId: String, owner: User)
+		requires:
+			dropped task exists with matching taskId and owner
+		effect:
+			remove dropped task
 ```

@@ -1,0 +1,4 @@
+# Concept Updates Summary
+1. To make sure that my full-stack app works smoothly in practice, I created a new concept called UserAuth, which manages the user authentication process (sign in, sign up, delete user, etc). The concept specification can be found [here](../concepts//UserAuth/UserAuth.md)
+2. To provide better scheduling flexibility for the user and a smoother adaptive optimization experience, I added a new field/attribute under the Session type in RoutineLog. The new attribute is isComplete. I also added a new action called completeTask. Now, when the user ends a session, they are prompted to answer if they completed the task or not. Thus, even if the actual session does not perfectly match the schedule, if the task is completed, there is no need for reschedule.
+3. For better task management and higher flexibility among the users, I added a new action `deleteDroppedTask` for AdaptiveSchedule concept, where users can undo dropping a task.
