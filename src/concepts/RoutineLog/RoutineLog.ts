@@ -311,22 +311,70 @@ export default class RoutineLogConcept {
   }
 
   /**
+   * completeTask(owner: User, sessionName: String, linkedTaskId: String): Empty
+   *
+   * **requires**
+   *   session exists with matching (owner, sessionName, linkedTaskId)
+   *
+   * **effects**
+   *   set session.isDone as True
+   */
+  async completeTask(
+    { owner, sessionName, linkedTaskId }: {
+      owner: User;
+      sessionName: string;
+      linkedTaskId: LinkedTaskId;
+    },
+  ): Promise<Empty | { error: string }> {
+    console.log(
+      `Action: completeTask for owner: ${owner}, sessionName: "${sessionName}", linkedTaskId: ${linkedTaskId}`,
+    );
+
+    const result = await this.sessions.findOneAndUpdate(
+      { owner, sessionName, linkedTaskId }, // Requirements: matching session
+      { $set: { isDone: true } },
+      { returnDocument: "after" },
+    );
+
+    if (!result) {
+      console.log(
+        `Error: completeTask failed. Session not found with matching owner, sessionName, and linkedTaskId.`,
+      );
+      return {
+        error: "Session not found with matching owner, sessionName, and linkedTaskId.",
+      };
+    }
+
+    console.log(`Effect: Session marked as complete (isDone=true).`);
+    return {};
+  }
+
+  /**
    * migrateExistingSessions(): Empty
    *
    * **effects**
    *   Set isDone=true for all sessions that don't have isDone field (existing sessions)
+   *   Additionally, set isDone=true for all sessions with linkedTaskId
    */
   async migrateExistingSessions(): Promise<{ updated: number } | { error: string }> {
     console.log('Migration: Setting isDone=true for all existing sessions');
 
     try {
-      const result = await this.sessions.updateMany(
-        { isDone: { $exists: false } }, // Find sessions without isDone field
-        { $set: { isDone: true } } // Set them as done
+      // Update sessions without isDone field
+      const result1 = await this.sessions.updateMany(
+        { isDone: { $exists: false } },
+        { $set: { isDone: true } }
       );
 
-      console.log(`Migration: Updated ${result.modifiedCount} sessions`);
-      return { updated: result.modifiedCount };
+      // Update all sessions with linkedTaskId to have isDone=true
+      const result2 = await this.sessions.updateMany(
+        { linkedTaskId: { $exists: true, $ne: null } },
+        { $set: { isDone: true } }
+      );
+
+      const totalUpdated = result1.modifiedCount + result2.modifiedCount;
+      console.log(`Migration: Updated ${totalUpdated} sessions total (${result1.modifiedCount} missing isDone, ${result2.modifiedCount} with linkedTaskId)`);
+      return { updated: totalUpdated };
     } catch (error: any) {
       console.error('Migration error:', error);
       return { error: `Migration failed: ${error.message}` };

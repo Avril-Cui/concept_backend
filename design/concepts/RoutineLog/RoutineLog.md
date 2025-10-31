@@ -25,6 +25,10 @@ actions
 	    // this is a query
         requires: exists at least one session with this owner
         effect: return ALL sessions under this owner
+    
+    completeTask (owner: User, sessionName: String, linkedTaskId: String)
+        requires: session exists with matching (owner, sessionName, linkedTaskId)
+        effect: set session.isComplete as True
 
     createSession(owner: User, sessionName: String, linkedTaskId?: String): (session: Session)
         effect:
