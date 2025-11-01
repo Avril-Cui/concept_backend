@@ -1,7 +1,21 @@
-# Source code for implementation and testing
 # Updated design
 See my updates for my concept design here: `/design/results/design2.md`
 
+# Start the backend server
+1. Create a `.env` file with:
+  ```
+  GEMINI_API_KEY=
+  GEMINI_MODEL=gemini-2.5-flash
+  GEMINI_CONFIG=./geminiConfig.json
+  MONGODB_URL=
+  DB_NAME=
+   ```
+
+2. Install Deno: https://deno.land/
+
+3. Run `deno task concepts`
+
+# Source code for implementation and testing
 ## `/src/concepts/`
 Contains the implementation of four core concepts:
 - **TaskCatalog**: Manages tasks with dependencies, priorities, deadlines, and scheduling
