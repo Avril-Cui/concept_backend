@@ -2,4 +2,5 @@
   "useMarkdownLinks": true,
   "newLinkFormat": "relative",
   "alwaysUpdateLinks": true
+  "showUnsupportedFiles": true
 }
