@@ -194,7 +194,7 @@ export const UpdateTaskCategoryRequest: Sync = ({
   ),
   then: actions([
     TaskCatalog.updateTaskCategory,
-    { owner: userId, taskId, newCategory: category },
+    { owner: userId, taskId, category: category },
   ]),
 });
 
@@ -249,7 +249,7 @@ export const UpdateTaskDurationRequest: Sync = ({
   ),
   then: actions([
     TaskCatalog.updateTaskDuration,
-    { owner: userId, taskId, newDuration: duration },
+    { owner: userId, taskId, duration: duration },
   ]),
 });
 
@@ -304,7 +304,7 @@ export const UpdateTaskPriorityRequest: Sync = ({
   ),
   then: actions([
     TaskCatalog.updateTaskPriority,
-    { owner: userId, taskId, newPriority: priority },
+    { owner: userId, taskId, priority: priority },
   ]),
 });
 
@@ -359,7 +359,7 @@ export const UpdateTaskSplittableRequest: Sync = ({
   ),
   then: actions([
     TaskCatalog.updateTaskSplittable,
-    { owner: userId, taskId, newSplittable: splittable },
+    { owner: userId, taskId, splittable: splittable },
   ]),
 });
 
@@ -414,7 +414,7 @@ export const UpdateTaskDeadlineRequest: Sync = ({
   ),
   then: actions([
     TaskCatalog.updateTaskDeadline,
-    { owner: userId, taskId, newDeadline: deadline },
+    { owner: userId, taskId, deadline: deadline },
   ]),
 });
 
@@ -464,7 +464,7 @@ export const UpdateTaskSlackRequest: Sync = ({
   ),
   then: actions([
     TaskCatalog.updateTaskSlack,
-    { owner: userId, taskId, newSlack: slack },
+    { owner: userId, taskId, slack: slack },
   ]),
 });
 
@@ -514,7 +514,7 @@ export const UpdateTaskNoteRequest: Sync = ({
   ),
   then: actions([
     TaskCatalog.updateTaskNote,
-    { owner: userId, taskId, newNote: note },
+    { owner: userId, taskId, note: note },
   ]),
 });
 
@@ -584,6 +584,61 @@ export const AddPreDependenceResponse: Sync = ({ request }) => ({
     [TaskCatalog.addPreDependence, {}, {}],
   ),
   then: actions([Requesting.respond, { request, msg: "Pre-dependence added successfully" }]),
+});
+
+// ============= REMOVE PRE DEPENDENCE =============
+
+export const ValidateSessionForRemovePreDependence: Sync = ({
+  request,
+  sessionToken,
+  taskId,
+  oldPreDependence,
+}) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/TaskCatalog/removePreDependence", sessionToken, taskId, oldPreDependence },
+    { request },
+  ]),
+  then: actions([Auth.validateSession, { sessionToken }]),
+});
+
+export const RemovePreDependenceRequest: Sync = ({
+  request,
+  sessionToken,
+  taskId,
+  oldPreDependence,
+  userId,
+}) => ({
+  when: actions(
+    [
+      Requesting.request,
+      {
+        path: "/TaskCatalog/removePreDependence",
+        sessionToken,
+        taskId,
+        oldPreDependence,
+      },
+      { request },
+    ],
+    [Auth.validateSession, { sessionToken }, { userId }],
+  ),
+  then: actions([
+    TaskCatalog.removePreDependence,
+    { owner: userId, taskId, oldPreDependence },
+  ]),
+});
+
+export const RemovePreDependenceResponse: Sync = ({ request }) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/TaskCatalog/removePreDependence" },
+      { request },
+    ],
+    [Auth.validateSession, {}, {}],
+    [TaskCatalog.removePreDependence, {}, {}],
+  ),
+  then: actions([Requesting.respond, { request, msg: "Pre-dependence removed successfully" }]),
 });
 
 // ============= ASSIGN SCHEDULE =============

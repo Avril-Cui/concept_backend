@@ -1,18 +1,22 @@
 /**
- * Setup Script for Friday's Schedule and Sessions
+ * Setup Script for fuqi's Schedule and Sessions
  *
- * This script clears all existing data for user Friday and populates:
+ * This script clears all existing data for user fuqi (fuqi@mit.edu) and populates:
  * 1. Scheduled tasks for a typical workday
  * 2. Logged sessions showing what actually happened (with interruptions)
  * 3. Links between sessions and scheduled tasks where names match
  */
 
 const API_BASE_URL = 'http://localhost:8000'
-const CURRENT_USER = 'Friday'
+const CURRENT_USER = 'fuqi'
+const USER_EMAIL = 'fuqi@mit.edu'
+const USER_PASSWORD = 'password123' // Default password for demo
 
 // MongoDB connection (for direct database updates)
 let mongoClient = null
 let db = null
+let sessionToken = null
+let userId = null // Store the userId for queries
 
 // Helper function to make API calls
 async function apiCall(endpoint, body) {
@@ -26,6 +30,55 @@ async function apiCall(endpoint, body) {
     throw new Error(data.error || `API call failed: ${endpoint}`)
   }
   return data
+}
+
+// Delete existing user account from database
+async function deleteExistingUser() {
+  console.log('=== Cleaning up existing user account ===\n')
+
+  try {
+    // Delete user by email
+    const userDeleted = await db.collection('Auth.users').deleteOne({ email: USER_EMAIL })
+    if (userDeleted.deletedCount > 0) {
+      console.log(`   ✓ Deleted existing user account for ${USER_EMAIL}`)
+    } else {
+      console.log(`   No existing user found (this is fine)`)
+    }
+
+    // Delete any sessions for this user
+    const sessionsDeleted = await db.collection('Auth.sessions').deleteMany({ })
+    if (sessionsDeleted.deletedCount > 0) {
+      console.log(`   ✓ Deleted ${sessionsDeleted.deletedCount} old sessions`)
+    }
+
+    console.log('')
+  } catch (error) {
+    console.log(`   Error cleaning up: ${error.message}`)
+  }
+}
+
+// Authenticate and get session token
+async function authenticateUser() {
+  console.log('=== Authenticating user ===\n')
+
+  // Since we just deleted the user, we should register fresh
+  try {
+    console.log(`   Registering new user ${CURRENT_USER}...`)
+    const registerResponse = await apiCall('/api/Auth/registerUser', {
+      username: CURRENT_USER,
+      email: USER_EMAIL,
+      password: USER_PASSWORD,
+    })
+    sessionToken = registerResponse.sessionToken
+    userId = registerResponse.userId
+    console.log(`   ✓ Registered successfully`)
+    console.log(`   ✓ User ID: ${userId}`)
+    console.log(`   ✓ Session token: ${sessionToken.substring(0, 10)}...\n`)
+  } catch (error) {
+    // If registration fails, something went wrong
+    console.error(`\n   ❌ Failed to register user: ${error.message}`)
+    throw new Error(`Authentication failed: ${error.message}`)
+  }
 }
 
 // Connect to MongoDB for direct updates
@@ -232,19 +285,19 @@ const loggedSessions = [
   },
 ]
 
-// Step 1: Clear all existing data for user Friday
+// Step 1: Clear all existing data for user fuqi
 async function clearAllData() {
-  console.log('\n=== Step 1: Clearing existing data for user Friday ===\n')
+  console.log('\n=== Step 1: Clearing existing data for user fuqi ===\n')
 
   try {
     // Get all tasks
-    const tasksResponse = await apiCall('/api/TaskCatalog/_getUserTasks', { owner: CURRENT_USER })
+    const tasksResponse = await apiCall('/api/TaskCatalog/_getUserTasks', { owner: userId })
     const tasks = tasksResponse.taskTable || []
 
     // Delete each task (this also removes associated time blocks)
     for (const task of tasks) {
       console.log(`   Deleting task: ${task.taskName}`)
-      await apiCall('/api/TaskCatalog/deleteTask', { owner: CURRENT_USER, taskId: task._id })
+      await apiCall('/api/TaskCatalog/deleteTask', { sessionToken, taskId: task._id })
     }
 
     console.log(`   ✓ Deleted ${tasks.length} tasks and their schedules`)
@@ -254,7 +307,7 @@ async function clearAllData() {
 
   // Delete all sessions directly from MongoDB since there's no API endpoint
   try {
-    const sessionsDeleted = await db.collection('RoutineLog.sessions').deleteMany({ owner: CURRENT_USER })
+    const sessionsDeleted = await db.collection('RoutineLog.sessions').deleteMany({ owner: userId })
     console.log(`   ✓ Deleted ${sessionsDeleted.deletedCount} sessions`)
   } catch (error) {
     console.log('   No sessions to delete or error:', error.message)
@@ -273,7 +326,7 @@ async function createScheduledTasks() {
     // Create the task
     console.log(`   Creating task: ${task.taskName}`)
     const taskResponse = await apiCall('/api/TaskCatalog/createTask', {
-      owner: CURRENT_USER,
+      sessionToken,
       taskName: task.taskName,
       category: task.category,
       duration: task.duration,
@@ -285,7 +338,7 @@ async function createScheduledTasks() {
 
     // Assign it to a time block (this creates the time block and adds task to it)
     const timeBlockResponse = await apiCall('/api/ScheduleTime/assignTimeBlock', {
-      owner: CURRENT_USER,
+      sessionToken,
       taskId: taskId,
       start: task.start,
       end: task.end,
@@ -295,7 +348,7 @@ async function createScheduledTasks() {
 
     // Link the time block back to the task (this adds timeBlockId to task's timeBlockSet)
     await apiCall('/api/TaskCatalog/assignSchedule', {
-      owner: CURRENT_USER,
+      sessionToken,
       taskId: taskId,
       timeBlockId: timeBlockId,
     })
@@ -324,7 +377,7 @@ async function createLoggedSessions(taskIdMap) {
 
     // First create the session
     const sessionResponse = await apiCall('/api/RoutineLog/createSession', {
-      owner: CURRENT_USER,
+      sessionToken,
       sessionName: session.sessionName,
       linkedTaskId: linkedTaskId,
     })
@@ -377,11 +430,11 @@ async function verifyData() {
   console.log('=== Step 4: Verification ===\n')
 
   // Get all tasks
-  const tasksResponse = await apiCall('/api/TaskCatalog/_getUserTasks', { owner: CURRENT_USER })
+  const tasksResponse = await apiCall('/api/TaskCatalog/_getUserTasks', { owner: userId })
   const tasks = tasksResponse.taskTable || []
 
   // Get all sessions
-  const sessionsResponse = await apiCall('/api/RoutineLog/_getUserSessions', { owner: CURRENT_USER })
+  const sessionsResponse = await apiCall('/api/RoutineLog/_getUserSessions', { owner: userId })
   const sessions = sessionsResponse.sessionTable || []
 
   console.log(`   Total tasks created: ${tasks.length}`)
@@ -404,7 +457,7 @@ async function verifyData() {
 // Main execution
 async function main() {
   console.log('═══════════════════════════════════════════════════════')
-  console.log('  Setup Script for Friday\'s Schedule and Sessions')
+  console.log('  Setup Script for fuqi\'s Schedule and Sessions')
   console.log(`  Date: ${SCHEDULE_DATE_DISPLAY}`)
   console.log(`  Current time: ${new Date().toLocaleString('en-US')}`)
   console.log(`  First time block: ${new Date(createDateTime(SCHEDULE_YEAR, SCHEDULE_MONTH, SCHEDULE_DAY, '09:00')).toLocaleString('en-US')}`)
@@ -413,6 +466,8 @@ async function main() {
 
   try {
     await connectMongoDB()
+    await deleteExistingUser()
+    await authenticateUser()
     await clearAllData()
     const taskIdMap = await createScheduledTasks()
     await createLoggedSessions(taskIdMap)

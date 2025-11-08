@@ -12,6 +12,19 @@ export const ValidateSessionForCreateRoutineSession: Sync = ({
   request,
   sessionToken,
   sessionName,
+}) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/RoutineLog/createSession", sessionToken, sessionName },
+    { request },
+  ]),
+  then: actions([Auth.validateSession, { sessionToken }]),
+});
+
+export const ValidateSessionForCreateRoutineSessionWithTask: Sync = ({
+  request,
+  sessionToken,
+  sessionName,
   linkedTaskId,
 }) => ({
   when: actions([
@@ -23,6 +36,30 @@ export const ValidateSessionForCreateRoutineSession: Sync = ({
 });
 
 export const CreateRoutineSessionRequest: Sync = ({
+  request,
+  sessionToken,
+  sessionName,
+  userId,
+}) => ({
+  when: actions(
+    [
+      Requesting.request,
+      {
+        path: "/RoutineLog/createSession",
+        sessionToken,
+        sessionName,
+      },
+      { request },
+    ],
+    [Auth.validateSession, { sessionToken }, { userId }],
+  ),
+  then: actions([
+    RoutineLog.createSession,
+    { owner: userId, sessionName },
+  ]),
+});
+
+export const CreateRoutineSessionWithTaskRequest: Sync = ({
   request,
   sessionToken,
   sessionName,

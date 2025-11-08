@@ -1,4 +1,14 @@
-# Updated design
+# Experience reflection
+[Reflection on my experience](design/results/final/reflection.md)
+
+# Youtube Video Demo
+[![Watch the video](https://img.youtube.com/vi/enQBL9zXayo/hqdefault.jpg)](https://www.youtube.com/watch?v=enQBL9zXayo)
+## Trace of output
+[Console output trace](design/results/final/output_trace.md)
+
+
+
+# Updated design for 4b
 See my updates for my concept design here: `/design/results/design2.md`
 
 # Start the backend server
