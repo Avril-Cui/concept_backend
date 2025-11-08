@@ -1,3 +1,249 @@
+Auth.authenticateUser { email: 'fuqi@mit.edu', password: 'password123' } => {
+  userId: '019a6149-0e56-7000-9631-0f6e405b982c',
+  username: 'fuqi',
+  sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd'
+}
+
+[Requesting] Received request for path: /TaskCatalog/createTask
+
+Requesting.request {
+  sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd',
+  taskName: 'add',
+  category: 'Work',
+  duration: 60,
+  priority: 3,
+  splittable: false,
+  path: '/TaskCatalog/createTask'
+} => { request: '019a61d1-6ba6-76bc-986e-b1cec4b5dd3b' }
+
+
+Auth.validateSession { sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd' } => { userId: '019a6149-0e56-7000-9631-0f6e405b982c' }
+
+
+TaskCatalog.createTask {
+  owner: '019a6149-0e56-7000-9631-0f6e405b982c',
+  taskName: 'add',
+  category: 'Work',
+  duration: 60,
+  priority: 3,
+  splittable: false
+} => {
+  task: {
+    _id: '019a61d1-6be5-7c15-8d98-3272dc2bd6b3',
+    owner: '019a6149-0e56-7000-9631-0f6e405b982c',
+    taskName: 'add',
+    category: 'Work',
+    duration: 60,
+    priority: 3,
+    splittable: false,
+    timeBlockSet: [],
+    postDependence: []
+  }
+}
+
+
+Requesting.respond {
+  request: '019a61d1-6ba6-76bc-986e-b1cec4b5dd3b',
+  task: {
+    _id: '019a61d1-6be5-7c15-8d98-3272dc2bd6b3',
+    owner: '019a6149-0e56-7000-9631-0f6e405b982c',
+    taskName: 'add',
+    category: 'Work',
+    duration: 60,
+    priority: 3,
+    splittable: false,
+    timeBlockSet: [],
+    postDependence: []
+  }
+} => { request: '019a61d1-6ba6-76bc-986e-b1cec4b5dd3b' }
+
+[Requesting] Received request for path: /ScheduleTime/assignTimeBlock
+
+Requesting.request {
+  sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd',
+  taskId: '019a61d1-6be5-7c15-8d98-3272dc2bd6b3',
+  start: 1762563600000,
+  end: 1762567200000,
+  path: '/ScheduleTime/assignTimeBlock'
+} => { request: '019a61d1-6c5e-7555-8019-da2efcdc0f96' }
+
+
+Auth.validateSession { sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd' } => { userId: '019a6149-0e56-7000-9631-0f6e405b982c' }
+
+
+ScheduleTime.assignTimeBlock {
+  owner: '019a6149-0e56-7000-9631-0f6e405b982c',
+  taskId: '019a61d1-6be5-7c15-8d98-3272dc2bd6b3',
+  start: 1762563600000,
+  end: 1762567200000
+} => { timeBlockId: '019a61d1-6cc9-78f0-91f6-90a770a48074' }
+
+
+Requesting.respond {
+  request: '019a61d1-6c5e-7555-8019-da2efcdc0f96',
+  timeBlockId: '019a61d1-6cc9-78f0-91f6-90a770a48074'
+} => { request: '019a61d1-6c5e-7555-8019-da2efcdc0f96' }
+
+[Requesting] Received request for path: /TaskCatalog/assignSchedule
+
+Requesting.request {
+  sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd',
+  taskId: '019a61d1-6be5-7c15-8d98-3272dc2bd6b3',
+  timeBlockId: '019a61d1-6cc9-78f0-91f6-90a770a48074',
+  path: '/TaskCatalog/assignSchedule'
+} => { request: '019a61d1-6d10-7e9b-904e-5c976cc9a2de' }
+
+
+Auth.validateSession { sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd' } => { userId: '019a6149-0e56-7000-9631-0f6e405b982c' }
+
+
+TaskCatalog.assignSchedule {
+  owner: '019a6149-0e56-7000-9631-0f6e405b982c',
+  taskId: '019a61d1-6be5-7c15-8d98-3272dc2bd6b3',
+  timeBlockId: '019a61d1-6cc9-78f0-91f6-90a770a48074'
+} => {}
+
+
+Requesting.respond {
+  request: '019a61d1-6d10-7e9b-904e-5c976cc9a2de',
+  msg: 'Schedule assigned successfully'
+} => { request: '019a61d1-6d10-7e9b-904e-5c976cc9a2de' }
+
+Query: _getUserSessions for owner: 019a6149-0e56-7000-9631-0f6e405b982c
+Effect: Found 21 sessions for owner 019a6149-0e56-7000-9631-0f6e405b982c.
+[Requesting] Received request for path: /RoutineLog/createSession
+
+Requesting.request {
+  sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd',
+  sessionName: 'new task',
+  linkedTaskId: '019a61c8-f99b-78b5-b930-1d216e570793',
+  path: '/RoutineLog/createSession'
+} => { request: '019a61d1-7ec2-73d5-9fe9-ba5410d118d6' }
+
+
+Auth.validateSession { sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd' } => { userId: '019a6149-0e56-7000-9631-0f6e405b982c' }
+
+Action: createSession by owner: 019a6149-0e56-7000-9631-0f6e405b982c, name: "new task", linkedTaskId: None
+Effect: Session created with ID: 019a61d1-7f0f-7024-b2c4-5836f3038199
+
+RoutineLog.createSession {
+  owner: '019a6149-0e56-7000-9631-0f6e405b982c',
+  sessionName: 'new task'
+} => {
+  session: {
+    _id: '019a61d1-7f0f-7024-b2c4-5836f3038199',
+    owner: '019a6149-0e56-7000-9631-0f6e405b982c',
+    sessionName: 'new task',
+    isPaused: false,
+    isActive: false,
+    isDone: false,
+    start: undefined,
+    end: undefined,
+    linkedTaskId: undefined,
+    interruptReason: undefined
+  }
+}
+
+
+Requesting.respond {
+  request: '019a61d1-7ec2-73d5-9fe9-ba5410d118d6',
+  session: {
+    _id: '019a61d1-7f0f-7024-b2c4-5836f3038199',
+    owner: '019a6149-0e56-7000-9631-0f6e405b982c',
+    sessionName: 'new task',
+    isPaused: false,
+    isActive: false,
+    isDone: false,
+    start: undefined,
+    end: undefined,
+    linkedTaskId: undefined,
+    interruptReason: undefined
+  }
+} => { request: '019a61d1-7ec2-73d5-9fe9-ba5410d118d6' }
+
+Action: createSession by owner: 019a6149-0e56-7000-9631-0f6e405b982c, name: "new task", linkedTaskId: 019a61c8-f99b-78b5-b930-1d216e570793
+Effect: Session created with ID: 019a61d1-7f60-7c4f-8471-43feabe65b08
+
+RoutineLog.createSession {
+  owner: '019a6149-0e56-7000-9631-0f6e405b982c',
+  sessionName: 'new task',
+  linkedTaskId: '019a61c8-f99b-78b5-b930-1d216e570793'
+} => {
+  session: {
+    _id: '019a61d1-7f60-7c4f-8471-43feabe65b08',
+    owner: '019a6149-0e56-7000-9631-0f6e405b982c',
+    sessionName: 'new task',
+    isPaused: false,
+    isActive: false,
+    isDone: false,
+    start: undefined,
+    end: undefined,
+    linkedTaskId: '019a61c8-f99b-78b5-b930-1d216e570793',
+    interruptReason: undefined
+  }
+}
+
+
+Auth.validateSession { sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd' } => { userId: '019a6149-0e56-7000-9631-0f6e405b982c' }
+
+[Requesting] Received request for path: /RoutineLog/startSession
+
+Requesting.request {
+  sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd',
+  session: { _id: '019a61d1-7f0f-7024-b2c4-5836f3038199' },
+  path: '/RoutineLog/startSession'
+} => { request: '019a61d1-7faf-75be-b3fa-98ff4ff7bbb3' }
+
+
+Auth.validateSession { sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd' } => { userId: '019a6149-0e56-7000-9631-0f6e405b982c' }
+
+Action: startSession for owner: 019a6149-0e56-7000-9631-0f6e405b982c, session: { _id: "019a61d1-7f0f-7024-b2c4-5836f3038199" }
+Extracted sessionId: 019a61d1-7f0f-7024-b2c4-5836f3038199
+Effect: Session 019a61d1-7f0f-7024-b2c4-5836f3038199 started at 1762577711078.
+
+RoutineLog.startSession {
+  owner: '019a6149-0e56-7000-9631-0f6e405b982c',
+  session: { _id: '019a61d1-7f0f-7024-b2c4-5836f3038199' }
+} => {}
+
+
+Requesting.respond {
+  request: '019a61d1-7faf-75be-b3fa-98ff4ff7bbb3',
+  msg: 'Session started successfully'
+} => { request: '019a61d1-7faf-75be-b3fa-98ff4ff7bbb3' }
+
+[Requesting] Received request for path: /RoutineLog/endSession
+
+Requesting.request {
+  sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd',
+  session: { _id: '019a61d1-7f0f-7024-b2c4-5836f3038199' },
+  isDone: true,
+  path: '/RoutineLog/endSession'
+} => { request: '019a61d1-91d6-754f-9f7a-bfe2bfe33b95' }
+
+
+Auth.validateSession { sessionToken: '019a61d1-4bd3-7648-bc49-248416bb47cd' } => { userId: '019a6149-0e56-7000-9631-0f6e405b982c' }
+
+Action: endSession for owner: 019a6149-0e56-7000-9631-0f6e405b982c, sessionId: 019a61d1-7f0f-7024-b2c4-5836f3038199, isDone: true
+Effect: Session 019a61d1-7f0f-7024-b2c4-5836f3038199 ended at 1762577715734 with isDone: true.
+
+RoutineLog.endSession {
+  owner: '019a6149-0e56-7000-9631-0f6e405b982c',
+  session: { _id: '019a61d1-7f0f-7024-b2c4-5836f3038199' },
+  isDone: true
+} => {}
+
+
+Requesting.respond {
+  request: '019a61d1-91d6-754f-9f7a-bfe2bfe33b95',
+  msg: 'Session ended successfully'
+} => { request: '019a61d1-91d6-754f-9f7a-bfe2bfe33b95' }
+
+Query: _getUserSessions for owner: 019a6149-0e56-7000-9631-0f6e405b982c
+Effect: Found 23 sessions for owner 019a6149-0e56-7000-9631-0f6e405b982c.
+Query: _getUserSessions for owner: 019a6149-0e56-7000-9631-0f6e405b982c
+Effect: Found 23 sessions for owner 019a6149-0e56-7000-9631-0f6e405b982c.
+
 Auth.validateSession { sessionToken: '019a61c8-d154-7eb4-bce6-98599c89fb89' } => { userId: '019a6149-0e56-7000-9631-0f6e405b982c' }
 
 [Requesting] Received request for path: /RoutineLog/startSession
