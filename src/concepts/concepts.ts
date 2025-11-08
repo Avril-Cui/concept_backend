@@ -1,6 +1,8 @@
-// This file is MANUALLY MAINTAINED due to custom concept file naming.
-// DO NOT RUN `deno task build` as it will overwrite this file!
-// The auto-generator expects {ConceptName}Concept.ts but we use {ConceptName}.ts
+// ⚠️ ⚠️ ⚠️ WARNING: DO NOT AUTO-GENERATE THIS FILE! ⚠️ ⚠️ ⚠️
+// This file is MANUALLY MAINTAINED with custom initialization logic.
+// DO NOT RUN `deno task build` - it will break the deployment!
+// The auto-generator doesn't understand our async init() pattern.
+// ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️ ⚠️
 
 import { SyncConcept } from "@engine";
 import type { Db, MongoClient } from "npm:mongodb";
