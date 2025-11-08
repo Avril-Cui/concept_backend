@@ -1,5 +1,12 @@
 // This import loads the `.env` file as environment variables
-import "jsr:@std/dotenv/load";
+// Wrapped in try-catch to handle deployment environments without .env files
+try {
+  await import("jsr:@std/dotenv/load");
+} catch {
+  // .env file not found or already loaded - this is fine in production
+  console.log("ℹ️  No .env file found, using environment variables directly");
+}
+
 import { Db, MongoClient } from "npm:mongodb";
 import { ID } from "@utils/types.ts";
 import { generate } from "jsr:@std/uuid/unstable-v7";
