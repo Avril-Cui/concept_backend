@@ -1,16 +1,3 @@
-    owner: '019a6149-0e56-7000-9631-0f6e405b982c',
-    sessionName: 'Testing Task',
-    isPaused: false,
-    isActive: false,
-    isDone: false,
-    start: undefined,
-    end: undefined,
-    linkedTaskId: '019a61bf-c9b9-73ca-8ee1-ac79d6eb5496',
-    interruptReason: undefined
-  }
-}
-
-
 Auth.validateSession { sessionToken: '019a61c8-d154-7eb4-bce6-98599c89fb89' } => { userId: '019a6149-0e56-7000-9631-0f6e405b982c' }
 
 [Requesting] Received request for path: /RoutineLog/startSession
