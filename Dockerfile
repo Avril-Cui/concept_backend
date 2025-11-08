@@ -12,11 +12,15 @@ EXPOSE 10000
 
 # Copy all application files into the working directory.
 # CRITICAL FIX: Use --chown to ensure the 'deno' user owns the files.
+# This grants the necessary write permissions for the build step.
 COPY --chown=deno:deno . .
 
-# NOTE: We do NOT run 'deno task build' here because concepts.ts is manually maintained
-# with a custom async init() pattern. The auto-generator would overwrite our carefully
-# crafted initialization code and break the deployment.
+# Run the custom build step defined in deno.json.
+# The auto-generator now correctly:
+# - Supports both {ConceptName}Concept.ts and {ConceptName}.ts naming conventions
+# - Generates code using async init() pattern instead of top-level await
+# This ensures concepts.ts is always up-to-date with all concept files.
+RUN deno task build
 
 # Cache the main module and all its dependencies.
 # This ensures faster startup times for the container as modules are pre-compiled.
