@@ -13,9 +13,6 @@ import { Logging } from "@engine";
 import { startRequestingServer } from "@concepts/Requesting/RequestingConcept.ts";
 import syncs from "@syncs";
 
-// Initialize database and concepts
-await concepts.initializeConcepts();
-
 /**
  * Available logging levels:
  *   Logging.OFF

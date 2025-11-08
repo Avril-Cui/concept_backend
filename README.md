@@ -12,6 +12,9 @@
 # Updated design for 4b
 See my updates for my concept design here: `/design/results/design2.md`
 
+# Include vs Exclude choices
+Check out I decided to include or exclude an action [here](design/results/final/include_exclude.md).
+
 # Start the backend server
 1. Create a `.env` file with:
   ```

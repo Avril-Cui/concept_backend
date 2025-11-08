@@ -2,7 +2,6 @@
 // Do not edit it manually, unless you know your concept requires a custom instantiation procedure.
 
 import { SyncConcept } from "@engine";
-import { Db, MongoClient } from "npm:mongodb";
 
 export const Engine = new SyncConcept();
 
@@ -12,18 +11,7 @@ import RequestingConcept from "./Requesting/RequestingConcept.ts";
 
 export type { default as RequestingConcept } from "./Requesting/RequestingConcept.ts";
 
-// Database and client will be initialized by initializeConcepts()
-export let db: Db;
-export let client: MongoClient;
+// Initialize the database connection
+export const [db, client] = await testDb();
 
-// Concept instances - initialized by initializeConcepts()
-export let Requesting: ReturnType<typeof Engine.instrumentConcept>;
-
-// Initialize all concepts with test database connection
-export async function initializeConcepts() {
-  const [dbInstance, clientInstance] = await testDb();
-  db = dbInstance;
-  client = clientInstance;
-
-  Requesting = Engine.instrumentConcept(new RequestingConcept(db));
-}
+export const Requesting = Engine.instrumentConcept(new RequestingConcept(db));

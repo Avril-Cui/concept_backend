@@ -3,7 +3,6 @@
 // The auto-generator expects {ConceptName}Concept.ts but we use {ConceptName}.ts
 
 import { SyncConcept } from "@engine";
-import { Db, MongoClient } from "npm:mongodb";
 
 export const Engine = new SyncConcept();
 
@@ -23,28 +22,25 @@ export type { default as RoutineLogConcept } from "./RoutineLog/RoutineLog.ts";
 export type { default as AdaptiveScheduleConcept } from "./AdaptiveSchedule/AdaptiveSchedule.ts";
 export type { default as RequestingConcept } from "./Requesting/RequestingConcept.ts";
 
-// Database and client will be initialized by initializeConcepts()
-export let db: Db;
-export let client: MongoClient;
-
-// Concept instances - initialized by initializeConcepts()
-export let Auth: ReturnType<typeof Engine.instrumentConcept>;
-export let TaskCatalog: ReturnType<typeof Engine.instrumentConcept>;
-export let ScheduleTime: ReturnType<typeof Engine.instrumentConcept>;
-export let RoutineLog: ReturnType<typeof Engine.instrumentConcept>;
-export let AdaptiveSchedule: ReturnType<typeof Engine.instrumentConcept>;
-export let Requesting: ReturnType<typeof Engine.instrumentConcept>;
-
-// Initialize all concepts with database connection
-export async function initializeConcepts() {
-  const [dbInstance, clientInstance] = await getDb();
-  db = dbInstance;
-  client = clientInstance;
-
-  Auth = Engine.instrumentConcept(new AuthConcept(db));
-  TaskCatalog = Engine.instrumentConcept(new TaskCatalogConcept(db));
-  ScheduleTime = Engine.instrumentConcept(new ScheduleTimeConcept(db));
-  RoutineLog = Engine.instrumentConcept(new RoutineLogConcept(db));
-  AdaptiveSchedule = Engine.instrumentConcept(new AdaptiveScheduleConcept(db));
-  Requesting = Engine.instrumentConcept(new RequestingConcept(db));
+// Initialize the database connection with better error handling
+let dbInitialization;
+try {
+  console.log("🔄 Initializing database connection...");
+  dbInitialization = await getDb();
+  console.log("✅ Database connection successful");
+} catch (error) {
+  console.error("❌ Failed to initialize database:", error);
+  console.error("Environment variables check:");
+  console.error("  MONGODB_URL:", Deno.env.get("MONGODB_URL") ? "✓ Set" : "✗ Not set");
+  console.error("  DB_NAME:", Deno.env.get("DB_NAME") ? "✓ Set" : "✗ Not set");
+  throw new Error(`Database initialization failed: ${error instanceof Error ? error.message : String(error)}`);
 }
+
+export const [db, client] = dbInitialization;
+
+export const Auth = Engine.instrumentConcept(new AuthConcept(db));
+export const TaskCatalog = Engine.instrumentConcept(new TaskCatalogConcept(db));
+export const ScheduleTime = Engine.instrumentConcept(new ScheduleTimeConcept(db));
+export const RoutineLog = Engine.instrumentConcept(new RoutineLogConcept(db));
+export const AdaptiveSchedule = Engine.instrumentConcept(new AdaptiveScheduleConcept(db));
+export const Requesting = Engine.instrumentConcept(new RequestingConcept(db));
