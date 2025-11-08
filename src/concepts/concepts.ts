@@ -38,9 +38,21 @@ try {
 
 export const [db, client] = dbInitialization;
 
+// Initialize concepts with error handling
+let adaptiveScheduleInstance;
+try {
+  console.log("🔄 Initializing AdaptiveSchedule concept...");
+  adaptiveScheduleInstance = new AdaptiveScheduleConcept(db);
+  console.log("✅ AdaptiveSchedule initialized successfully");
+} catch (error) {
+  console.error("❌ Failed to initialize AdaptiveSchedule:", error);
+  console.error("  GEMINI_API_KEY:", Deno.env.get("GEMINI_API_KEY") ? "✓ Set" : "✗ Not set");
+  throw new Error(`AdaptiveSchedule initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+}
+
 export const Auth = Engine.instrumentConcept(new AuthConcept(db));
 export const TaskCatalog = Engine.instrumentConcept(new TaskCatalogConcept(db));
 export const ScheduleTime = Engine.instrumentConcept(new ScheduleTimeConcept(db));
 export const RoutineLog = Engine.instrumentConcept(new RoutineLogConcept(db));
-export const AdaptiveSchedule = Engine.instrumentConcept(new AdaptiveScheduleConcept(db));
+export const AdaptiveSchedule = Engine.instrumentConcept(adaptiveScheduleInstance);
 export const Requesting = Engine.instrumentConcept(new RequestingConcept(db));

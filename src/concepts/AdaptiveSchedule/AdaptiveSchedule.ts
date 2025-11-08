@@ -70,10 +70,15 @@ export default class AdaptiveScheduleConcept {
 
     // Load config from environment if not provided
     if (!llmConfig) {
+      const apiKey = Deno.env.get("GEMINI_API_KEY");
+      if (!apiKey) {
+        throw new Error("GEMINI_API_KEY environment variable is required for AdaptiveSchedule");
+      }
       llmConfig = {
-        apiKey: Deno.env.get("GEMINI_API_KEY") || "",
-        model: Deno.env.get("GEMINI_MODEL") || "gemini-2.0-flash-exp",
-        configPath: Deno.env.get("GEMINI_CONFIG") || "./geminiConfig.json"
+        apiKey: apiKey,
+        maxRetries: 3,
+        timeoutMs: 30000,
+        initialBackoffMs: 1000
       };
     }
 
