@@ -3,6 +3,12 @@
  * Ensures authenticated users can only modify their own adaptive schedules
  */
 
+// TEMP DIAGNOSTIC: Log what @concepts exports
+import * as conceptsDebug from "@concepts";
+console.log("🔍 [adaptive.sync.ts] @concepts keys:", Object.keys(conceptsDebug));
+console.log("🔍 [adaptive.sync.ts] AdaptiveSchedule exists:", "AdaptiveSchedule" in conceptsDebug);
+console.log("🔍 [adaptive.sync.ts] AdaptiveSchedule value:", conceptsDebug.AdaptiveSchedule);
+
 import { Auth, Requesting, AdaptiveSchedule } from "@concepts";
 import { actions, Sync } from "@engine";
 
