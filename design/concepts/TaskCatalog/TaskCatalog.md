@@ -51,7 +51,7 @@ actions
         effect:
             add timeBlockId to this task's timeBlockSet
     
-    deleteSchedule (owner: User, taskId: String, timeBockId: string)
+    deleteSchedule (owner: User, taskId: String, timeBlockId: string)
         requires:
             exists a task with matching owner and taskId;
             timeBlockId exists in this task's timeBlockSet;

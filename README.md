@@ -6,7 +6,8 @@
 ## Trace of output
 [Console output trace](design/results/final/output_trace.md)
 
-
+# Final design document
+[My final design document](design/results/final/final_design.md)
 
 # Updated design for 4b
 See my updates for my concept design here: `/design/results/design2.md`
