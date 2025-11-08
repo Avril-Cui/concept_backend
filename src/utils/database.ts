@@ -17,15 +17,11 @@ async function initMongoClient() {
     throw new Error("Could not find environment variable: MONGODB_URL");
   }
 
-  // For MongoDB Atlas with mongodb+srv://, use configuration that works on cloud platforms
-  // The tlsAllowInvalidCertificates and tlsAllowInvalidHostnames options help with
-  // TLS issues on platforms like Render that may have different certificate setups
+  // For MongoDB Atlas with mongodb+srv://, use minimal configuration
+  // The connection string already includes TLS settings (tls=true&tlsInsecure=false)
   const client = new MongoClient(DB_CONN, {
     serverSelectionTimeoutMS: 5000,
     connectTimeoutMS: 10000,
-    tls: true,
-    tlsAllowInvalidCertificates: false,
-    tlsAllowInvalidHostnames: false,
   });
 
   try {
