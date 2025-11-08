@@ -8,10 +8,12 @@ import { actions, Sync } from "@engine";
 
 // ============= CREATE SESSION =============
 
+// Consolidated sync that handles both with and without linkedTaskId
 export const ValidateSessionForCreateRoutineSession: Sync = ({
   request,
   sessionToken,
   sessionName,
+  linkedTaskId,
 }) => ({
   when: actions([
     Requesting.request,
@@ -21,48 +23,10 @@ export const ValidateSessionForCreateRoutineSession: Sync = ({
   then: actions([Auth.validateSession, { sessionToken }]),
 });
 
-export const ValidateSessionForCreateRoutineSessionWithTask: Sync = ({
-  request,
-  sessionToken,
-  sessionName,
-  linkedTaskId,
-}) => ({
-  when: actions([
-    Requesting.request,
-    { path: "/RoutineLog/createSession", sessionToken, sessionName, linkedTaskId },
-    { request },
-  ]),
-  then: actions([Auth.validateSession, { sessionToken }]),
-});
-
 export const CreateRoutineSessionRequest: Sync = ({
   request,
   sessionToken,
   sessionName,
-  userId,
-}) => ({
-  when: actions(
-    [
-      Requesting.request,
-      {
-        path: "/RoutineLog/createSession",
-        sessionToken,
-        sessionName,
-      },
-      { request },
-    ],
-    [Auth.validateSession, { sessionToken }, { userId }],
-  ),
-  then: actions([
-    RoutineLog.createSession,
-    { owner: userId, sessionName },
-  ]),
-});
-
-export const CreateRoutineSessionWithTaskRequest: Sync = ({
-  request,
-  sessionToken,
-  sessionName,
   linkedTaskId,
   userId,
 }) => ({
@@ -73,7 +37,6 @@ export const CreateRoutineSessionWithTaskRequest: Sync = ({
         path: "/RoutineLog/createSession",
         sessionToken,
         sessionName,
-        linkedTaskId,
       },
       { request },
     ],
