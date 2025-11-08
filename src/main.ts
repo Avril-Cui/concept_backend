@@ -13,8 +13,15 @@ import { Logging } from "@engine";
 import { startRequestingServer } from "@concepts/Requesting/RequestingConcept.ts";
 import syncs from "@syncs";
 
+// Verify exports are available
+console.log("📦 @concepts exports:", Object.keys(concepts).filter(k => !k.startsWith('_')));
+console.log("🔍 AdaptiveSchedule exported:", 'AdaptiveSchedule' in concepts);
+
 // Initialize database and all concepts before using them
 await concepts.init();
+
+// Verify exports are initialized
+console.log("✅ AdaptiveSchedule initialized:", typeof concepts.AdaptiveSchedule === 'object' && concepts.AdaptiveSchedule !== null);
 
 /**
  * Available logging levels:
