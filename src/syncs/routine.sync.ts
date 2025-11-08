@@ -8,12 +8,11 @@ import { actions, Sync } from "@engine";
 
 // ============= CREATE SESSION =============
 
-// Consolidated sync that handles both with and without linkedTaskId
+// Single validation sync for session creation (linkedTaskId is optional)
 export const ValidateSessionForCreateRoutineSession: Sync = ({
   request,
   sessionToken,
   sessionName,
-  linkedTaskId,
 }) => ({
   when: actions([
     Requesting.request,
@@ -23,6 +22,7 @@ export const ValidateSessionForCreateRoutineSession: Sync = ({
   then: actions([Auth.validateSession, { sessionToken }]),
 });
 
+// Single create session sync (linkedTaskId is optional, will be undefined if not provided)
 export const CreateRoutineSessionRequest: Sync = ({
   request,
   sessionToken,
