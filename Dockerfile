@@ -12,12 +12,11 @@ EXPOSE 10000
 
 # Copy all application files into the working directory.
 # CRITICAL FIX: Use --chown to ensure the 'deno' user owns the files.
-# This grants the necessary write permissions for the build step.
 COPY --chown=deno:deno . .
 
-# Run the custom build step defined in deno.json.
-# This step writes to src/concepts/concepts.ts and now has permission to do so.
-RUN deno task build
+# NOTE: We do NOT run 'deno task build' here because concepts.ts is manually maintained
+# with a custom async init() pattern. The auto-generator would overwrite our carefully
+# crafted initialization code and break the deployment.
 
 # Cache the main module and all its dependencies.
 # This ensures faster startup times for the container as modules are pre-compiled.
