@@ -10,6 +10,7 @@ type User = ID;
 type Username = string;
 type Email = string;
 type Password = string;
+type SessionToken = ID;
 
 /**
  * User authentication concept
@@ -23,14 +24,31 @@ interface UserDocument {
   createdAt: number; // Unix timestamp
 }
 
+/**
+ * Session document
+ * Manages active user sessions
+ */
+interface SessionDocument {
+  _id: SessionToken;
+  userId: User;
+  createdAt: number;
+  expiresAt: number;
+  isActive: boolean;
+}
+
 export default class AuthConcept {
   users: Collection<UserDocument>;
+  sessions: Collection<SessionDocument>;
 
   constructor(private readonly db: Db) {
     this.users = this.db.collection(PREFIX + "users");
+    this.sessions = this.db.collection(PREFIX + "sessions");
     // Create unique index on email
     this.users.createIndex({ email: 1 }, { unique: true });
     this.users.createIndex({ username: 1 }, { unique: true });
+    // Create indexes for sessions
+    this.sessions.createIndex({ userId: 1 });
+    this.sessions.createIndex({ expiresAt: 1 });
   }
 
   /**
@@ -86,14 +104,16 @@ export default class AuthConcept {
   }
 
   /**
-   * authenticateUser (email: Email, password: Password): (userId: User, username: Username)
+   * authenticateUser (email: Email, password: Password): (userId: User, username: Username, sessionToken: SessionToken)
    *
    * **requires**
    *     user with this email exists;
    *     password matches the stored password;
    *
    * **effect**
-   *     return the user's ID and username if authentication succeeds;
+   *     authenticate the user;
+   *     create a new session;
+   *     return the user's ID, username, and session token;
    */
   async authenticateUser({
     email,
@@ -101,7 +121,7 @@ export default class AuthConcept {
   }: {
     email: Email;
     password: Password;
-  }): Promise<{ userId: User; username: Username } | { error: string }> {
+  }): Promise<{ userId: User; username: Username; sessionToken: SessionToken } | { error: string }> {
     const user = await this.users.findOne({ email });
 
     if (!user) {
@@ -113,7 +133,17 @@ export default class AuthConcept {
       return { error: "Invalid email or password" };
     }
 
-    return { userId: user._id, username: user.username };
+    // Create a session for the authenticated user
+    const sessionResult = await this.createSession({ userId: user._id });
+    if ("error" in sessionResult) {
+      return { error: sessionResult.error };
+    }
+
+    return {
+      userId: user._id,
+      username: user.username,
+      sessionToken: sessionResult.sessionToken
+    };
   }
 
   /**
@@ -238,6 +268,117 @@ export default class AuthConcept {
       return { error: `User with ID ${userId} not found` };
     }
 
+    // Cascade delete: remove all sessions for this user
+    await this.sessions.deleteMany({ userId });
+
     return {};
+  }
+
+  /**
+   * createSession (userId: User): (sessionToken: SessionToken)
+   *
+   * **requires**
+   *     user with this userId exists;
+   *
+   * **effect**
+   *     create a new session for the user;
+   *     session expires in 7 days;
+   *     return the session token;
+   */
+  async createSession({
+    userId,
+  }: {
+    userId: User;
+  }): Promise<{ sessionToken: SessionToken } | { error: string }> {
+    const user = await this.users.findOne({ _id: userId });
+    if (!user) {
+      return { error: `User with ID ${userId} not found` };
+    }
+
+    const sessionToken: SessionToken = freshID();
+    const session: SessionDocument = {
+      _id: sessionToken,
+      userId,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+      isActive: true,
+    };
+
+    await this.sessions.insertOne(session);
+    return { sessionToken };
+  }
+
+  /**
+   * validateSession (sessionToken: SessionToken): (userId: User)
+   *
+   * **requires**
+   *     session with this sessionToken exists;
+   *     session is active and not expired;
+   *
+   * **effect**
+   *     return the userId associated with this session;
+   */
+  async validateSession({
+    sessionToken,
+  }: {
+    sessionToken: SessionToken;
+  }): Promise<{ userId: User } | { error: string }> {
+    const session = await this.sessions.findOne({ _id: sessionToken });
+
+    if (!session) {
+      return { error: "Invalid session token" };
+    }
+
+    if (!session.isActive) {
+      return { error: "Session is not active" };
+    }
+
+    if (session.expiresAt < Date.now()) {
+      // Mark session as inactive
+      await this.sessions.updateOne(
+        { _id: sessionToken },
+        { $set: { isActive: false } }
+      );
+      return { error: "Session has expired" };
+    }
+
+    return { userId: session.userId };
+  }
+
+  /**
+   * deleteSession (sessionToken: SessionToken)
+   *
+   * **requires**
+   *     session with this sessionToken exists;
+   *
+   * **effect**
+   *     delete the session (logout);
+   */
+  async deleteSession({
+    sessionToken,
+  }: {
+    sessionToken: SessionToken;
+  }): Promise<Empty | { error: string }> {
+    const result = await this.sessions.deleteOne({ _id: sessionToken });
+
+    if (result.deletedCount === 0) {
+      return { error: "Session not found" };
+    }
+
+    return {};
+  }
+
+  /**
+   * cleanupExpiredSessions ()
+   *
+   * **effect**
+   *     delete all expired sessions;
+   *     return count of deleted sessions;
+   */
+  async cleanupExpiredSessions(): Promise<{ count: number }> {
+    const result = await this.sessions.deleteMany({
+      expiresAt: { $lt: Date.now() },
+    });
+    return { count: result.deletedCount || 0 };
   }
 }
