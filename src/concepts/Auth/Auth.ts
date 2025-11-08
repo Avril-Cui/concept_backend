@@ -52,7 +52,7 @@ export default class AuthConcept {
   }
 
   /**
-   * registerUser (username: Username, email: Email, password: Password): (userId: User)
+   * registerUser (username: Username, email: Email, password: Password): (userId: User, username: Username, sessionToken: SessionToken)
    *
    * **requires**
    *     email is not already registered;
@@ -60,7 +60,8 @@ export default class AuthConcept {
    *
    * **effect**
    *     create a new user with the given username, email, and password;
-   *     return the newly created user's ID;
+   *     create a new session for the user;
+   *     return the newly created user's ID, username, and session token;
    */
   async registerUser({
     username,
@@ -70,7 +71,7 @@ export default class AuthConcept {
     username: Username;
     email: Email;
     password: Password;
-  }): Promise<{ userId: User; username: Username } | { error: string }> {
+  }): Promise<{ userId: User; username: Username; sessionToken: SessionToken } | { error: string }> {
     // Check if email already exists
     const existingEmail = await this.users.findOne({ email });
     if (existingEmail) {
@@ -94,7 +95,14 @@ export default class AuthConcept {
 
     try {
       await this.users.insertOne(newUser);
-      return { userId, username };
+
+      // Create a session for the newly registered user
+      const sessionResult = await this.createSession({ userId });
+      if ("error" in sessionResult) {
+        return { error: sessionResult.error };
+      }
+
+      return { userId, username, sessionToken: sessionResult.sessionToken };
     } catch (e) {
       if (e instanceof Error) {
         return { error: `Failed to register user: ${e.message}` };

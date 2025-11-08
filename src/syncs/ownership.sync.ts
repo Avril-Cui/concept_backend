@@ -139,7 +139,7 @@ export const UpdateTaskNameRequest: Sync = ({
   ),
   then: actions([
     TaskCatalog.updateTaskName,
-    { owner: userId, taskId, newName: taskName },
+    { owner: userId, taskId, taskName: taskName },
   ]),
 });
 

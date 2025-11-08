@@ -568,6 +568,15 @@ export default class TaskCatalogConcept {
     }
 
     try {
+      // Before deleting, remove this task from the postDependence of all its preDependencies
+      if (task.preDependence && task.preDependence.length > 0) {
+        await this.tasks.updateMany(
+          { _id: { $in: task.preDependence } },
+          { $pull: { postDependence: taskId } },
+        );
+      }
+
+      // Now delete the task
       await this.tasks.deleteOne({ _id: taskId, owner });
       return {};
     } catch (e) {
