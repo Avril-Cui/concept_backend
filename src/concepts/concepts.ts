@@ -3,6 +3,7 @@
 // The auto-generator expects {ConceptName}Concept.ts but we use {ConceptName}.ts
 
 import { SyncConcept } from "@engine";
+import type { Db, MongoClient } from "npm:mongodb";
 
 export const Engine = new SyncConcept();
 
@@ -22,37 +23,56 @@ export type { default as RoutineLogConcept } from "./RoutineLog/RoutineLog.ts";
 export type { default as AdaptiveScheduleConcept } from "./AdaptiveSchedule/AdaptiveSchedule.ts";
 export type { default as RequestingConcept } from "./Requesting/RequestingConcept.ts";
 
-// Initialize the database connection with better error handling
-let dbInitialization;
-try {
-  console.log("🔄 Initializing database connection...");
-  dbInitialization = await getDb();
-  console.log("✅ Database connection successful");
-} catch (error) {
-  console.error("❌ Failed to initialize database:", error);
-  console.error("Environment variables check:");
-  console.error("  MONGODB_URL:", Deno.env.get("MONGODB_URL") ? "✓ Set" : "✗ Not set");
-  console.error("  DB_NAME:", Deno.env.get("DB_NAME") ? "✓ Set" : "✗ Not set");
-  throw new Error(`Database initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+// Database and client - will be initialized by init()
+export let db: Db = null as any;
+export let client: MongoClient = null as any;
+
+// Concept instances - will be initialized by init()
+export let Auth: any = null as any;
+export let TaskCatalog: any = null as any;
+export let ScheduleTime: any = null as any;
+export let RoutineLog: any = null as any;
+export let AdaptiveSchedule: any = null as any;
+export let Requesting: any = null as any;
+
+// Initialization flag
+let initialized = false;
+
+// Initialize all concepts - MUST be called before using any concepts
+export async function init() {
+  if (initialized) {
+    console.log("⚠️ Concepts already initialized, skipping...");
+    return;
+  }
+
+  try {
+    console.log("🔄 Initializing database connection...");
+    const [dbInstance, clientInstance] = await getDb();
+    db = dbInstance;
+    client = clientInstance;
+    console.log("✅ Database connection successful");
+
+    console.log("🔄 Initializing concepts...");
+    Auth = Engine.instrumentConcept(new AuthConcept(db));
+    TaskCatalog = Engine.instrumentConcept(new TaskCatalogConcept(db));
+    ScheduleTime = Engine.instrumentConcept(new ScheduleTimeConcept(db));
+    RoutineLog = Engine.instrumentConcept(new RoutineLogConcept(db));
+
+    console.log("🔄 Initializing AdaptiveSchedule concept...");
+    const adaptiveScheduleInstance = new AdaptiveScheduleConcept(db);
+    AdaptiveSchedule = Engine.instrumentConcept(adaptiveScheduleInstance);
+    console.log("✅ AdaptiveSchedule initialized successfully");
+
+    Requesting = Engine.instrumentConcept(new RequestingConcept(db));
+
+    initialized = true;
+    console.log("✅ All concepts initialized successfully");
+  } catch (error) {
+    console.error("❌ Failed to initialize concepts:", error);
+    console.error("Environment variables check:");
+    console.error("  MONGODB_URL:", Deno.env.get("MONGODB_URL") ? "✓ Set" : "✗ Not set");
+    console.error("  DB_NAME:", Deno.env.get("DB_NAME") ? "✓ Set" : "✗ Not set");
+    console.error("  GEMINI_API_KEY:", Deno.env.get("GEMINI_API_KEY") ? "✓ Set" : "✗ Not set");
+    throw new Error(`Concept initialization failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
-
-export const [db, client] = dbInitialization;
-
-// Initialize concepts with error handling
-let adaptiveScheduleInstance;
-try {
-  console.log("🔄 Initializing AdaptiveSchedule concept...");
-  adaptiveScheduleInstance = new AdaptiveScheduleConcept(db);
-  console.log("✅ AdaptiveSchedule initialized successfully");
-} catch (error) {
-  console.error("❌ Failed to initialize AdaptiveSchedule:", error);
-  console.error("  GEMINI_API_KEY:", Deno.env.get("GEMINI_API_KEY") ? "✓ Set" : "✗ Not set");
-  throw new Error(`AdaptiveSchedule initialization failed: ${error instanceof Error ? error.message : String(error)}`);
-}
-
-export const Auth = Engine.instrumentConcept(new AuthConcept(db));
-export const TaskCatalog = Engine.instrumentConcept(new TaskCatalogConcept(db));
-export const ScheduleTime = Engine.instrumentConcept(new ScheduleTimeConcept(db));
-export const RoutineLog = Engine.instrumentConcept(new RoutineLogConcept(db));
-export const AdaptiveSchedule = Engine.instrumentConcept(adaptiveScheduleInstance);
-export const Requesting = Engine.instrumentConcept(new RequestingConcept(db));
