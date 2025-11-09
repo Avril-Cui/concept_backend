@@ -12,11 +12,10 @@ import { actions, Sync } from "@engine";
 export const ValidateSessionForCreateRoutineSession: Sync = ({
   request,
   sessionToken,
-  sessionName,
 }) => ({
   when: actions([
     Requesting.request,
-    { path: "/RoutineLog/createSession", sessionToken, sessionName },
+    { path: "/RoutineLog/createSession", sessionToken },
     { request },
   ]),
   then: actions([Auth.validateSession, { sessionToken }]),
@@ -36,7 +35,6 @@ export const CreateRoutineSessionRequest: Sync = ({
       {
         path: "/RoutineLog/createSession",
         sessionToken,
-        sessionName,
       },
       { request },
     ],
