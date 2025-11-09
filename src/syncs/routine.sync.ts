@@ -21,7 +21,7 @@ export const ValidateSessionForCreateRoutineSession: Sync = ({
   then: actions([Auth.validateSession, { sessionToken }]),
 });
 
-// Single create session sync (linkedTaskId is optional, will be undefined if not provided)
+// SINGLE sync for createSession - matches path only, binds all params from request
 export const CreateRoutineSessionRequest: Sync = ({
   request,
   sessionToken,
@@ -35,11 +35,13 @@ export const CreateRoutineSessionRequest: Sync = ({
       {
         path: "/RoutineLog/createSession",
         sessionToken,
+        sessionName,
       },
       { request },
     ],
     [Auth.validateSession, { sessionToken }, { userId }],
   ),
+  // linkedTaskId will be undefined if not provided in request
   then: actions([
     RoutineLog.createSession,
     { owner: userId, sessionName, linkedTaskId },
