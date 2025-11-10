@@ -21,12 +21,12 @@ export const ValidateSessionForCreateRoutineSession: Sync = ({
   then: actions([Auth.validateSession, { sessionToken }]),
 });
 
-// Create session sync - handles both ad-hoc (linkedTaskId: null) and planned (linkedTaskId: UUID) sessions
+// Create session sync - linkedTaskId parameter will be bound from request even though not in pattern
 export const CreateRoutineSessionRequest: Sync = ({
   request,
   sessionToken,
   sessionName,
-  linkedTaskId, // Will be null for ad-hoc sessions, or a UUID for planned sessions
+  linkedTaskId, // Will be bound from request payload automatically
   userId,
 }) => ({
   when: actions(
@@ -36,7 +36,7 @@ export const CreateRoutineSessionRequest: Sync = ({
         path: "/RoutineLog/createSession",
         sessionToken,
         sessionName,
-        linkedTaskId, // Must be in pattern to be properly bound from request
+        // linkedTaskId NOT in pattern - avoids multiple pattern matches
       },
       { request },
     ],
@@ -44,7 +44,7 @@ export const CreateRoutineSessionRequest: Sync = ({
   ),
   then: actions([
     RoutineLog.createSession,
-    { owner: userId, sessionName, linkedTaskId }, // linkedTaskId will be null for ad-hoc, UUID for planned
+    { owner: userId, sessionName, linkedTaskId: linkedTaskId || null },
   ]),
 });
 
