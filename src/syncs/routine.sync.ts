@@ -40,13 +40,13 @@ export const CreateRoutineSessionRequest: Sync = ({
     ],
     [Auth.validateSession, { sessionToken }, { userId }],
   ),
-  then: async (app) => {
+  then: async function* (app) {
     // Fetch the full request data from database to get linkedTaskId
     const requestDoc = await app.store.get("Requesting.requests", request);
     const linkedTaskId = (requestDoc as any)?.input?.linkedTaskId || null;
 
     // Now call createSession with the linkedTaskId
-    return actions([
+    yield* actions([
       RoutineLog.createSession,
       { owner: userId, sessionName, linkedTaskId },
     ])(app);
