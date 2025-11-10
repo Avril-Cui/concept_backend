@@ -21,12 +21,11 @@ export const ValidateSessionForCreateRoutineSession: Sync = ({
   then: actions([Auth.validateSession, { sessionToken }]),
 });
 
-// Create session sync - linkedTaskId parameter will be bound from request even though not in pattern
+// Create session sync - retrieves linkedTaskId from Requesting data in then block
 export const CreateRoutineSessionRequest: Sync = ({
   request,
   sessionToken,
   sessionName,
-  linkedTaskId, // Will be bound from request payload automatically
   userId,
 }) => ({
   when: actions(
@@ -36,16 +35,22 @@ export const CreateRoutineSessionRequest: Sync = ({
         path: "/RoutineLog/createSession",
         sessionToken,
         sessionName,
-        // linkedTaskId NOT in pattern - avoids multiple pattern matches
       },
       { request },
     ],
     [Auth.validateSession, { sessionToken }, { userId }],
   ),
-  then: actions([
-    RoutineLog.createSession,
-    { owner: userId, sessionName, linkedTaskId: linkedTaskId || null },
-  ]),
+  then: async (app) => {
+    // Fetch the full request data from database to get linkedTaskId
+    const requestDoc = await app.store.get("Requesting.requests", request);
+    const linkedTaskId = (requestDoc as any)?.input?.linkedTaskId || null;
+
+    // Now call createSession with the linkedTaskId
+    return actions([
+      RoutineLog.createSession,
+      { owner: userId, sessionName, linkedTaskId },
+    ])(app);
+  },
 });
 
 export const CreateRoutineSessionResponse: Sync = ({ request, session }) => ({
