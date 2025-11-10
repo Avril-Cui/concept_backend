@@ -8,7 +8,7 @@ import { actions, Sync } from "@engine";
 
 // ============= CREATE SESSION =============
 
-// Single validation sync for session creation (linkedTaskId is optional)
+// Validation for create session
 export const ValidateSessionForCreateRoutineSession: Sync = ({
   request,
   sessionToken,
@@ -21,12 +21,12 @@ export const ValidateSessionForCreateRoutineSession: Sync = ({
   then: actions([Auth.validateSession, { sessionToken }]),
 });
 
-// SINGLE sync for createSession - matches path only, binds all params from request
+// Create session sync - handles both ad-hoc (linkedTaskId: null) and planned (linkedTaskId: UUID) sessions
 export const CreateRoutineSessionRequest: Sync = ({
   request,
   sessionToken,
   sessionName,
-  linkedTaskId,
+  linkedTaskId, // Will be null for ad-hoc sessions, or a UUID for planned sessions
   userId,
 }) => ({
   when: actions(
@@ -36,15 +36,15 @@ export const CreateRoutineSessionRequest: Sync = ({
         path: "/RoutineLog/createSession",
         sessionToken,
         sessionName,
+        linkedTaskId, // Must be in pattern to be properly bound from request
       },
       { request },
     ],
     [Auth.validateSession, { sessionToken }, { userId }],
   ),
-  // linkedTaskId will be undefined if not provided in request
   then: actions([
     RoutineLog.createSession,
-    { owner: userId, sessionName, linkedTaskId },
+    { owner: userId, sessionName, linkedTaskId }, // linkedTaskId will be null for ad-hoc, UUID for planned
   ]),
 });
 
