@@ -97,15 +97,27 @@ export default class RoutineLogConcept {
    *   return this newly created session;
    */
   async createSession(
-    { owner, sessionName, linkedTaskId }: {
+    { owner, sessionName, linkedTaskId, requestId }: {
       owner: User;
       sessionName: string;
       linkedTaskId?: LinkedTaskId;
+      requestId?: string;
     },
   ): Promise<{ session: Session } | { error: string }> {
+    // If requestId is provided, fetch linkedTaskId from the request data
+    let actualLinkedTaskId = linkedTaskId;
+    if (requestId && !linkedTaskId) {
+      try {
+        const requestDoc = await this.db.collection("Requesting.requests").findOne({ _id: requestId });
+        actualLinkedTaskId = (requestDoc as any)?.input?.linkedTaskId || undefined;
+      } catch (e) {
+        console.error("Failed to fetch linkedTaskId from request:", e);
+      }
+    }
+
     console.log(
       `Action: createSession by owner: ${owner}, name: "${sessionName}", linkedTaskId: ${
-        linkedTaskId || "None"
+        actualLinkedTaskId || "None"
       }`,
     );
     const newSessionId = freshID() as SessionId;
@@ -118,7 +130,7 @@ export default class RoutineLogConcept {
       isDone: false,
       start: undefined,
       end: undefined,
-      linkedTaskId: linkedTaskId,
+      linkedTaskId: actualLinkedTaskId,
       interruptReason: undefined,
     };
 
